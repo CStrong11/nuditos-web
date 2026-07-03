@@ -74,7 +74,7 @@ async function crearEtiqueta() {
   if (!nombre) return
   const { data, error: e } = await supabase
     .from('etiquetas')
-    .insert({ nombre, user_id: user.value!.id })
+    .insert({ nombre, user_id: userID(user.value) })
     .select('id, nombre')
     .single()
   if (e) { error.value = e.message; return }
@@ -90,7 +90,7 @@ async function guardarEtiquetas(hiloID: string) {
     const filas = [...tagsSeleccionados.value].map(etiqueta_id => ({
       hilo_id: hiloID,
       etiqueta_id,
-      user_id: user.value!.id,
+      user_id: userID(user.value),
     }))
     const { error: e } = await supabase.from('hilo_etiquetas').insert(filas)
     if (e) throw e
@@ -101,7 +101,7 @@ async function guardar() {
   error.value = null
   guardando.value = true
   try {
-    const uid = user.value!.id
+    const uid = userID(user.value)
     const payload: Record<string, any> = {
       nombre: form.nombre,
       marca: form.marca || null,

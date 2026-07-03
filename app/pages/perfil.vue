@@ -31,7 +31,7 @@ function avisar(texto: string, error = false) {
 
 // Todos los updates a perfiles llevan WHERE id = uid (el proyecto lo exige).
 async function actualizarPerfil(campos: Record<string, string>) {
-  const { error } = await supabase.from('perfiles').update(campos).eq('id', user.value!.id)
+  const { error } = await supabase.from('perfiles').update(campos).eq('id', userID(user.value))
   if (error) throw error
   await refresh()
 }
@@ -75,7 +75,7 @@ async function cambiarAvatar(e: Event) {
   if (!file) return
   subiendoAvatar.value = true
   try {
-    const url = await subirImagen(supabase, 'avatars', user.value!.id, 'avatar', file)
+    const url = await subirImagen(supabase, 'avatars', userID(user.value), 'avatar', file)
     await actualizarPerfil({ avatar_url: url })
   } catch (err: any) {
     avisar(err.message, true)
@@ -115,7 +115,7 @@ const nuevaEtiqueta = ref('')
 async function crearEtiqueta() {
   const nombre = nuevaEtiqueta.value.trim()
   if (!nombre) return
-  const { error } = await supabase.from('etiquetas').insert({ nombre, user_id: user.value!.id })
+  const { error } = await supabase.from('etiquetas').insert({ nombre, user_id: userID(user.value) })
   if (error) { avisar(error.message, true); return }
   nuevaEtiqueta.value = ''
   await refreshEtiquetas()

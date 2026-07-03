@@ -58,7 +58,7 @@ async function crearProyecto() {
   guardando.value = true
   try {
     const { error: e } = await supabase.from('proyectos').insert({
-      user_id: user.value!.id,
+      user_id: userID(user.value),
       nombre: nuevo.nombre,
       descripcion: nuevo.descripcion || null,
       estado: nuevo.estado,

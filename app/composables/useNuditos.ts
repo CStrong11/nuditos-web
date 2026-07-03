@@ -1,5 +1,13 @@
 // Helpers compartidos — mismas reglas de negocio que la app iOS.
 
+/// Id del usuario a partir de useSupabaseUser(). En @nuxtjs/supabase v2 el
+/// composable devuelve el payload del JWT (el id viene en `sub`, no en `id`).
+export function userID(u: any): string {
+  const id = u?.sub ?? u?.id
+  if (!id) throw new Error('Sesión no disponible — inicia sesión de nuevo')
+  return id
+}
+
 export function dinero(v: number): string {
   return '$' + new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 }).format(v)
 }
