@@ -97,7 +97,7 @@ async function crearProyecto() {
       <button
         v-for="f in filtros" :key="f.label"
         class="shrink-0 rounded-xl border px-4 py-1.5 text-sm font-medium"
-        :class="filtro === f.id ? 'border-rosa bg-rosa text-white' : 'border-borde bg-white text-texto'"
+        :class="filtro === f.id ? 'border-rosa bg-rosa text-white' : 'border-borde bg-blanco text-texto'"
         @click="filtro = f.id"
       >
         {{ f.label }}
@@ -114,7 +114,7 @@ async function crearProyecto() {
       <li v-for="p in proyectosFiltrados" :key="p.id">
         <NuxtLink
           :to="`/proyectos/${p.id}`"
-          class="block rounded-2xl border border-borde bg-white p-4 transition hover:border-rosa"
+          class="block rounded-2xl border border-borde bg-blanco p-4 transition hover:border-rosa"
         >
           <div class="flex items-start gap-4">
             <div class="min-w-0 flex-1">
@@ -170,19 +170,19 @@ async function crearProyecto() {
         <input
           v-model="nuevo.nombre"
           placeholder="Nombre"
-          class="mb-3 w-full rounded-xl border border-borde bg-white px-3 py-2.5 outline-none focus:border-rosa"
+          class="mb-3 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
         >
         <textarea
           v-model="nuevo.descripcion"
           placeholder="Descripción"
           rows="2"
-          class="mb-3 w-full rounded-xl border border-borde bg-white px-3 py-2.5 outline-none focus:border-rosa"
+          class="mb-3 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
         />
         <div class="mb-4 flex gap-2">
           <button
             v-for="(label, id) in estadoLabel" :key="id"
             class="flex-1 rounded-xl border py-2 text-xs font-medium"
-            :class="nuevo.estado === id ? 'border-rosa bg-rosa-pastel text-rosa' : 'border-borde bg-white text-texto2'"
+            :class="nuevo.estado === id ? 'border-rosa bg-rosa-pastel text-rosa' : 'border-borde bg-blanco text-texto2'"
             @click="nuevo.estado = id"
           >
             {{ label }}
@@ -192,7 +192,7 @@ async function crearProyecto() {
         <p v-if="error" class="mb-3 rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>
 
         <div class="flex gap-3">
-          <button class="flex-1 rounded-2xl border border-borde bg-white py-3" @click="modalCrear = false">
+          <button class="flex-1 rounded-2xl border border-borde bg-blanco py-3" @click="modalCrear = false">
             Cancelar
           </button>
           <button

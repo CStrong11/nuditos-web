@@ -84,19 +84,49 @@ async function cambiarAvatar(e: Event) {
   }
 }
 
-// --- Tema (se guarda para compartir con iOS; la web aplica el acento luego) ---
+// --- Tema (compartido con la app iOS vía perfiles.tema / color_tema) ---
+const { $aplicarTema } = useNuxtApp()
 const acentos = ['rosa', 'durazno', 'verde', 'celeste', 'lila']
 const coloresAcento: Record<string, string> = {
   rosa: '#C06B86', durazno: '#A85C32', verde: '#4E7A4A', celeste: '#4A7BA6', lila: '#7B5EA6',
 }
 
 async function guardarTema(campos: Record<string, string>) {
+  // Aplicar al instante en la web...
+  $aplicarTema(
+    campos.tema ?? perfil.value?.tema ?? 'sistema',
+    campos.color_tema ?? perfil.value?.color_tema ?? 'rosa',
+  )
+  // ...y persistir (también lo usa la app iOS).
   try {
     await actualizarPerfil(campos)
-    avisar('Tema guardado — se aplicará también en la app iOS')
   } catch (e: any) {
     avisar(e.message, true)
   }
+}
+
+// --- Etiquetas ---
+const { data: etiquetas, refresh: refreshEtiquetas } = await useAsyncData('etiquetas-perfil', async () => {
+  const { data } = await supabase.from('etiquetas').select('id, nombre').order('nombre')
+  return (data ?? []) as { id: string, nombre: string }[]
+})
+const nuevaEtiqueta = ref('')
+
+async function crearEtiqueta() {
+  const nombre = nuevaEtiqueta.value.trim()
+  if (!nombre) return
+  const { error } = await supabase.from('etiquetas').insert({ nombre, user_id: user.value!.id })
+  if (error) { avisar(error.message, true); return }
+  nuevaEtiqueta.value = ''
+  await refreshEtiquetas()
+  await refreshNuxtData('etiquetas')
+}
+
+async function eliminarEtiqueta(id: string) {
+  const { error } = await supabase.from('etiquetas').delete().eq('id', id)
+  if (error) { avisar(error.message, true); return }
+  await refreshEtiquetas()
+  await refreshNuxtData('etiquetas')
 }
 
 async function cerrarSesion() {
@@ -120,7 +150,7 @@ async function cerrarSesion() {
     </p>
 
     <!-- Cabecera de perfil -->
-    <section class="rounded-2xl border border-borde bg-white p-6 text-center">
+    <section class="rounded-2xl border border-borde bg-blanco p-6 text-center">
       <label class="relative mx-auto block h-20 w-20 cursor-pointer">
         <img
           v-if="perfil?.avatar_url"
@@ -181,7 +211,7 @@ async function cerrarSesion() {
     </section>
 
     <!-- Info -->
-    <section class="mt-4 divide-y divide-borde rounded-2xl border border-borde bg-white">
+    <section class="mt-4 divide-y divide-borde rounded-2xl border border-borde bg-blanco">
       <div class="flex items-center gap-3 px-4 py-3">
         <span>✉️</span>
         <div>
@@ -201,7 +231,7 @@ async function cerrarSesion() {
     </section>
 
     <!-- Apariencia -->
-    <section class="mt-4 rounded-2xl border border-borde bg-white p-4">
+    <section class="mt-4 rounded-2xl border border-borde bg-blanco p-4">
       <h2 class="mb-3 font-bold">Apariencia</h2>
 
       <div class="mb-4 flex gap-2">
@@ -225,6 +255,32 @@ async function cerrarSesion() {
         >
           <span v-if="perfil?.color_tema === a">✓</span>
         </button>
+      </div>
+    </section>
+
+    <!-- Etiquetas -->
+    <section class="mt-4 rounded-2xl border border-borde bg-blanco p-4">
+      <h2 class="mb-3 font-bold">Etiquetas</h2>
+
+      <div class="mb-3 flex gap-2">
+        <input
+          v-model="nuevaEtiqueta"
+          placeholder="Nueva etiqueta"
+          class="flex-1 rounded-xl border border-borde bg-blanco px-3 py-2 text-sm outline-none focus:border-rosa"
+          @keydown.enter="crearEtiqueta"
+        >
+        <button class="rounded-xl bg-rosa px-4 font-bold text-white" @click="crearEtiqueta">+</button>
+      </div>
+
+      <p v-if="!etiquetas?.length" class="text-sm text-texto2">Sin etiquetas</p>
+      <div v-else class="flex flex-wrap gap-2">
+        <span
+          v-for="tag in etiquetas" :key="tag.id"
+          class="flex items-center gap-2 rounded-xl border border-borde bg-blanco px-3 py-1 text-sm"
+        >
+          {{ tag.nombre }}
+          <button class="text-xs text-texto2" @click="eliminarEtiqueta(tag.id)">✕</button>
+        </span>
       </div>
     </section>
 

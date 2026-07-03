@@ -18,7 +18,7 @@ function activa(to: string): boolean {
   <div class="pb-24">
     <slot />
 
-    <nav class="fixed inset-x-0 bottom-0 border-t border-borde bg-white/90 backdrop-blur">
+    <nav class="fixed inset-x-0 bottom-0 border-t border-borde bg-blanco/90 backdrop-blur">
       <div class="mx-auto flex max-w-3xl justify-around">
         <NuxtLink
           v-for="tab in tabs"

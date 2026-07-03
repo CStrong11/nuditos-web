@@ -15,6 +15,7 @@ interface ResumenHilo {
 
 const supabase = useSupabaseClient()
 const busqueda = ref('')
+const tagsSeleccionados = ref<Set<string>>(new Set())
 
 const { data: hilos, status } = await useAsyncData('resumen_hilos', async () => {
   const { data, error } = await supabase
@@ -25,12 +26,33 @@ const { data: hilos, status } = await useAsyncData('resumen_hilos', async () => 
   return (data ?? []) as ResumenHilo[]
 })
 
+const { data: etiquetas } = await useAsyncData('etiquetas', async () => {
+  const { data } = await supabase.from('etiquetas').select('id, nombre').order('nombre')
+  return (data ?? []) as { id: string, nombre: string }[]
+})
+
+function toggleTag(id: string) {
+  const s = new Set(tagsSeleccionados.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  tagsSeleccionados.value = s
+}
+
 const hilosFiltrados = computed(() => {
   const q = busqueda.value.trim().toLowerCase()
-  if (!q) return hilos.value ?? []
-  return (hilos.value ?? []).filter(h =>
-    h.nombre.toLowerCase().includes(q) || h.marca?.toLowerCase().includes(q),
-  )
+  const nombresSel = (etiquetas.value ?? [])
+    .filter(t => tagsSeleccionados.value.has(t.id))
+    .map(t => t.nombre)
+
+  return (hilos.value ?? []).filter((h) => {
+    const coincideBusqueda = !q
+      || h.nombre.toLowerCase().includes(q)
+      || h.marca?.toLowerCase().includes(q)
+
+    const tagsHilo = h.etiquetas?.split(',').map(s => s.trim()) ?? []
+    const coincideTags = !nombresSel.length || nombresSel.some(n => tagsHilo.includes(n))
+
+    return coincideBusqueda && coincideTags
+  })
 })
 
 function porcentaje(h: ResumenHilo): number {
@@ -58,8 +80,22 @@ function porcentaje(h: ResumenHilo): number {
       v-model="busqueda"
       type="search"
       placeholder="Buscar por nombre o marca…"
-      class="mb-6 w-full rounded-2xl border border-borde bg-white px-4 py-3 outline-none placeholder:text-texto2/70 focus:border-rosa"
+      class="mb-4 w-full rounded-2xl border border-borde bg-blanco px-4 py-3 outline-none placeholder:text-texto2/70 focus:border-rosa"
     >
+
+    <!-- Filtro por etiquetas -->
+    <div v-if="etiquetas?.length" class="mb-6 flex gap-2 overflow-x-auto">
+      <button
+        v-for="tag in etiquetas" :key="tag.id"
+        class="shrink-0 rounded-xl border px-3 py-1 text-sm font-medium"
+        :class="tagsSeleccionados.has(tag.id)
+          ? 'border-rosa bg-rosa text-white'
+          : 'border-borde bg-blanco text-texto'"
+        @click="toggleTag(tag.id)"
+      >
+        {{ tag.nombre }}
+      </button>
+    </div>
 
     <p v-if="status === 'pending'" class="py-12 text-center text-texto2">Cargando…</p>
 
@@ -71,7 +107,7 @@ function porcentaje(h: ResumenHilo): number {
       <li v-for="hilo in hilosFiltrados" :key="hilo.id">
         <NuxtLink
           :to="`/hilos/${hilo.id}`"
-          class="block rounded-2xl border border-borde bg-white p-4 transition hover:border-rosa"
+          class="block rounded-2xl border border-borde bg-blanco p-4 transition hover:border-rosa"
         >
           <div class="flex items-center gap-4">
             <img
@@ -99,6 +135,22 @@ function porcentaje(h: ResumenHilo): number {
             >
               Stock bajo
             </span>
+
+            <!-- Acciones rápidas (abren el modal en el detalle) -->
+            <div class="flex shrink-0 flex-col gap-1.5">
+              <button
+                class="rounded-lg bg-durazno-bg px-3 py-1 text-xs font-semibold text-durazno-text"
+                @click.prevent.stop="navigateTo(`/hilos/${hilo.id}?accion=usar`)"
+              >
+                − usar
+              </button>
+              <button
+                class="rounded-lg bg-verde-bg px-3 py-1 text-xs font-semibold text-verde-text"
+                @click.prevent.stop="navigateTo(`/hilos/${hilo.id}?accion=reponer`)"
+              >
+                + reponer
+              </button>
+            </div>
           </div>
 
           <div class="mt-3 h-2 overflow-hidden rounded-full bg-crema">

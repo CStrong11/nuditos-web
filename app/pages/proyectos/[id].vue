@@ -105,7 +105,7 @@ async function eliminar() {
         <h1 class="text-xl font-bold">Detalle</h1>
       </div>
       <div class="flex gap-2">
-        <button class="rounded-xl border border-borde bg-white px-3 py-1.5 text-sm" @click="abrirEditar">
+        <button class="rounded-xl border border-borde bg-blanco px-3 py-1.5 text-sm" @click="abrirEditar">
           Editar
         </button>
         <button class="rounded-xl bg-poco-bg px-3 py-1.5 text-sm font-medium text-poco-text" @click="eliminar">
@@ -118,7 +118,7 @@ async function eliminar() {
 
     <template v-else-if="proyecto">
       <!-- Cabecera -->
-      <section class="rounded-2xl border border-borde bg-white p-5 text-center">
+      <section class="rounded-2xl border border-borde bg-blanco p-5 text-center">
         <img
           v-if="proyecto.imagen_url"
           :src="proyecto.imagen_url"
@@ -133,7 +133,7 @@ async function eliminar() {
       </section>
 
       <!-- Consumo -->
-      <section v-if="data?.consumo" class="mt-4 rounded-2xl border border-borde bg-white p-5 text-center">
+      <section v-if="data?.consumo" class="mt-4 rounded-2xl border border-borde bg-blanco p-5 text-center">
         <h3 class="font-bold">Consumo total</h3>
         <p class="mt-1 text-3xl font-bold text-rosa">
           {{ data.consumo.consumo_total.toFixed(1) }} {{ data.consumo.unidad ?? '' }}
@@ -144,7 +144,7 @@ async function eliminar() {
       </section>
 
       <!-- Gasto -->
-      <section v-if="gastos.length" class="mt-4 rounded-2xl border border-borde bg-white p-5 text-center">
+      <section v-if="gastos.length" class="mt-4 rounded-2xl border border-borde bg-blanco p-5 text-center">
         <h3 class="font-bold">Gasto total estimado</h3>
         <p class="mt-1 text-3xl font-bold text-verde-text">{{ dinero(gastoTotal) }}</p>
         <p v-if="haySinCosto" class="mt-1 text-xs text-texto2">
@@ -156,7 +156,7 @@ async function eliminar() {
       <section v-if="gastos.length" class="mt-6">
         <h3 class="mb-3 font-bold">Detalle de gastos</h3>
 
-        <div class="mb-4 flex rounded-xl border border-borde bg-white p-1">
+        <div class="mb-4 flex rounded-xl border border-borde bg-blanco p-1">
           <button
             class="flex-1 rounded-lg py-2 text-sm font-medium"
             :class="tab === 'movimientos' ? 'bg-rosa-pastel text-rosa' : 'text-texto2'"
@@ -177,7 +177,7 @@ async function eliminar() {
         <ul v-if="tab === 'movimientos'" class="space-y-2">
           <li
             v-for="mov in gastos" :key="mov.id"
-            class="flex items-center gap-3 rounded-2xl border border-borde bg-white p-3"
+            class="flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-3"
           >
             <span class="flex h-9 w-9 items-center justify-center rounded-full bg-durazno-bg text-sm">✂️</span>
             <div class="min-w-0 flex-1">
@@ -203,7 +203,7 @@ async function eliminar() {
         <ul v-else class="space-y-2">
           <li
             v-for="r in gastosPorHilo" :key="r.id"
-            class="flex items-center gap-3 rounded-2xl border border-borde bg-white p-3"
+            class="flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-3"
           >
             <span class="flex h-9 w-9 items-center justify-center rounded-full bg-celeste text-sm">🧶</span>
             <div class="min-w-0 flex-1">
@@ -234,19 +234,19 @@ async function eliminar() {
         <input
           v-model="edicion.nombre"
           placeholder="Nombre"
-          class="mb-3 w-full rounded-xl border border-borde bg-white px-3 py-2.5 outline-none focus:border-rosa"
+          class="mb-3 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
         >
         <textarea
           v-model="edicion.descripcion"
           placeholder="Descripción"
           rows="2"
-          class="mb-3 w-full rounded-xl border border-borde bg-white px-3 py-2.5 outline-none focus:border-rosa"
+          class="mb-3 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
         />
         <div class="mb-4 flex gap-2">
           <button
             v-for="(label, id) in estadoLabel" :key="id"
             class="flex-1 rounded-xl border py-2 text-xs font-medium"
-            :class="edicion.estado === id ? 'border-rosa bg-rosa-pastel text-rosa' : 'border-borde bg-white text-texto2'"
+            :class="edicion.estado === id ? 'border-rosa bg-rosa-pastel text-rosa' : 'border-borde bg-blanco text-texto2'"
             @click="edicion.estado = id"
           >
             {{ label }}
@@ -254,7 +254,7 @@ async function eliminar() {
         </div>
 
         <div class="flex gap-3">
-          <button class="flex-1 rounded-2xl border border-borde bg-white py-3" @click="modalEditar = false">
+          <button class="flex-1 rounded-2xl border border-borde bg-blanco py-3" @click="modalEditar = false">
             Cancelar
           </button>
           <button

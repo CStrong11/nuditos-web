@@ -43,11 +43,11 @@ function nombreMes(mes: string): string {
     <template v-else-if="data">
       <!-- Totales -->
       <div class="mb-6 grid grid-cols-2 gap-3">
-        <div class="rounded-2xl border border-borde bg-white p-4 text-center">
+        <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
           <p class="text-3xl font-bold text-rosa">{{ data.totalHilos }}</p>
           <p class="text-xs text-texto2">hilos en inventario</p>
         </div>
-        <div class="rounded-2xl border border-borde bg-white p-4 text-center">
+        <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
           <p class="text-3xl font-bold" :class="data.stockBajo ? 'text-poco-text' : 'text-verde-text'">
             {{ data.stockBajo }}
           </p>
@@ -56,7 +56,7 @@ function nombreMes(mes: string): string {
       </div>
 
       <!-- Consumo mensual -->
-      <section class="mb-6 rounded-2xl border border-borde bg-white p-5">
+      <section class="mb-6 rounded-2xl border border-borde bg-blanco p-5">
         <h2 class="mb-4 font-bold">Consumo mensual</h2>
         <p v-if="!data.mensual.length" class="py-4 text-center text-sm text-texto2">
           Sin consumo registrado aún
@@ -78,7 +78,7 @@ function nombreMes(mes: string): string {
       </section>
 
       <!-- Consumo por proyecto -->
-      <section class="rounded-2xl border border-borde bg-white p-5">
+      <section class="rounded-2xl border border-borde bg-blanco p-5">
         <h2 class="mb-4 font-bold">Consumo por proyecto</h2>
         <p v-if="!data.porProyecto.length" class="py-4 text-center text-sm text-texto2">
           Sin proyectos con consumo

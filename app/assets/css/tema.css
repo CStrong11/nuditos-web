@@ -1,0 +1,56 @@
+/*
+ * Paleta de Nuditos como variables CSS (tripletas RGB para que funcionen
+ * los modificadores de opacidad de Tailwind). Igual que NuditosColors en iOS:
+ * base clara/oscura + acento configurable (rosa/durazno/verde/celeste/lila).
+ *
+ * El plugin tema.client.ts aplica `.oscuro` y `data-acento` en <html>
+ * (en modo "sistema" sigue prefers-color-scheme vía matchMedia).
+ */
+
+:root {
+  --crema: 251 246 238;
+  --blanco: 255 255 255;
+  --borde: 236 227 214;
+  --texto: 74 68 61;
+  --texto2: 154 144 133;
+  --verde-bg: 220 237 216;
+  --verde-text: 78 122 74;
+  --durazno-bg: 251 230 214;
+  --durazno-text: 168 92 50;
+  --celeste: 214 230 242;
+  --poco-bg: 251 224 214;
+  --poco-text: 181 83 42;
+  --acento: 192 107 134;
+  --acento-pastel: 246 215 224;
+}
+
+/* Acentos (modo claro) */
+html[data-acento='durazno'] { --acento: 168 92 50; --acento-pastel: 251 230 214; }
+html[data-acento='verde']   { --acento: 78 122 74; --acento-pastel: 220 237 216; }
+html[data-acento='celeste'] { --acento: 74 123 166; --acento-pastel: 214 230 242; }
+html[data-acento='lila']    { --acento: 123 94 166; --acento-pastel: 230 220 242; }
+
+/* Modo oscuro */
+html.oscuro {
+  color-scheme: dark;
+  --crema: 28 25 23;
+  --blanco: 42 37 33;
+  --borde: 59 52 44;
+  --texto: 237 230 220;
+  --texto2: 168 159 147;
+  --verde-bg: 44 59 42;
+  --verde-text: 156 203 150;
+  --durazno-bg: 68 48 31;
+  --durazno-text: 224 163 119;
+  --celeste: 46 59 71;
+  --poco-bg: 69 42 29;
+  --poco-text: 224 143 96;
+  --acento: 217 140 163;
+  --acento-pastel: 68 39 49;
+}
+
+/* Acentos (modo oscuro) */
+html.oscuro[data-acento='durazno'] { --acento: 224 163 119; --acento-pastel: 68 48 31; }
+html.oscuro[data-acento='verde']   { --acento: 156 203 150; --acento-pastel: 44 59 42; }
+html.oscuro[data-acento='celeste'] { --acento: 143 184 219; --acento-pastel: 38 55 67; }
+html.oscuro[data-acento='lila']    { --acento: 184 163 224; --acento-pastel: 53 43 69; }

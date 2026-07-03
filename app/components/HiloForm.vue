@@ -46,6 +46,57 @@ function elegirFoto(e: Event) {
   previewFoto.value = URL.createObjectURL(file)
 }
 
+// --- Etiquetas ---
+const etiquetas = ref<{ id: string, nombre: string }[]>([])
+const tagsSeleccionados = ref<Set<string>>(new Set())
+const nuevaEtiqueta = ref('')
+
+onMounted(async () => {
+  const { data } = await supabase.from('etiquetas').select('id, nombre').order('nombre')
+  etiquetas.value = (data ?? []) as any[]
+  if (props.hilo) {
+    const { data: vinculadas } = await supabase
+      .from('hilo_etiquetas')
+      .select('etiqueta_id')
+      .eq('hilo_id', props.hilo.id)
+    tagsSeleccionados.value = new Set((vinculadas ?? []).map((v: any) => v.etiqueta_id))
+  }
+})
+
+function toggleTag(id: string) {
+  const s = new Set(tagsSeleccionados.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  tagsSeleccionados.value = s
+}
+
+async function crearEtiqueta() {
+  const nombre = nuevaEtiqueta.value.trim()
+  if (!nombre) return
+  const { data, error: e } = await supabase
+    .from('etiquetas')
+    .insert({ nombre, user_id: user.value!.id })
+    .select('id, nombre')
+    .single()
+  if (e) { error.value = e.message; return }
+  etiquetas.value.push(data as any)
+  toggleTag((data as any).id)
+  nuevaEtiqueta.value = ''
+}
+
+async function guardarEtiquetas(hiloID: string) {
+  // Igual que iOS: desvincular todo y volver a vincular la selección.
+  await supabase.from('hilo_etiquetas').delete().eq('hilo_id', hiloID)
+  if (tagsSeleccionados.value.size) {
+    const filas = [...tagsSeleccionados.value].map(etiqueta_id => ({
+      hilo_id: hiloID,
+      etiqueta_id,
+      user_id: user.value!.id,
+    }))
+    const { error: e } = await supabase.from('hilo_etiquetas').insert(filas)
+    if (e) throw e
+  }
+}
+
 async function guardar() {
   error.value = null
   guardando.value = true
@@ -87,6 +138,8 @@ async function guardar() {
       if (e2) throw e2
     }
 
+    await guardarEtiquetas(hiloID)
+    await refreshNuxtData('resumen_hilos')
     navigateTo(`/hilos/${hiloID}`)
   } catch (e: any) {
     error.value = e.message ?? 'No se pudo guardar'
@@ -101,7 +154,7 @@ async function guardar() {
     <!-- Foto -->
     <label class="block cursor-pointer">
       <span class="mb-2 block font-semibold">Foto</span>
-      <div class="flex h-40 items-center justify-center overflow-hidden rounded-2xl border border-borde bg-white">
+      <div class="flex h-40 items-center justify-center overflow-hidden rounded-2xl border border-borde bg-blanco">
         <img v-if="previewFoto" :src="previewFoto" class="h-full w-full object-cover" alt="">
         <span v-else class="text-sm text-texto2">Agregar foto</span>
       </div>
@@ -117,7 +170,7 @@ async function guardar() {
     </div>
 
     <!-- Medida -->
-    <div class="rounded-2xl border border-borde bg-white p-4">
+    <div class="rounded-2xl border border-borde bg-blanco p-4">
       <p class="mb-3 font-semibold">Medida</p>
       <div class="mb-3 flex gap-2">
         <button
@@ -152,7 +205,7 @@ async function guardar() {
     </div>
 
     <!-- Detalles -->
-    <div class="rounded-2xl border border-borde bg-white p-4">
+    <div class="rounded-2xl border border-borde bg-blanco p-4">
       <p class="mb-3 font-semibold">Detalles</p>
       <div class="grid gap-3 sm:grid-cols-2">
         <label class="text-sm text-texto2">
@@ -184,6 +237,42 @@ async function guardar() {
       </div>
     </div>
 
+    <!-- Etiquetas -->
+    <div class="rounded-2xl border border-borde bg-blanco p-4">
+      <p class="mb-3 font-semibold">Etiquetas</p>
+
+      <div class="mb-3 flex gap-2">
+        <input
+          v-model="nuevaEtiqueta"
+          placeholder="Nueva etiqueta"
+          class="campo flex-1"
+          @keydown.enter.prevent="crearEtiqueta"
+        >
+        <button
+          type="button"
+          class="rounded-xl bg-rosa px-4 font-bold text-white"
+          @click="crearEtiqueta"
+        >
+          +
+        </button>
+      </div>
+
+      <p v-if="!etiquetas.length" class="text-sm text-texto2">No hay etiquetas aún</p>
+      <div v-else class="flex flex-wrap gap-2">
+        <button
+          v-for="tag in etiquetas" :key="tag.id"
+          type="button"
+          class="rounded-xl border px-3 py-1 text-sm font-medium"
+          :class="tagsSeleccionados.has(tag.id)
+            ? 'border-rosa bg-rosa text-white'
+            : 'border-borde bg-blanco text-texto'"
+          @click="toggleTag(tag.id)"
+        >
+          {{ tag.nombre }}
+        </button>
+      </div>
+    </div>
+
     <p v-if="error" class="rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>
 
     <button
@@ -198,6 +287,6 @@ async function guardar() {
 
 <style scoped>
 .campo {
-  @apply w-full rounded-xl border border-borde bg-white px-3 py-2.5 text-texto outline-none placeholder:text-texto2/60 focus:border-rosa;
+  @apply w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 text-texto outline-none placeholder:text-texto2/60 focus:border-rosa;
 }
 </style>

@@ -4,20 +4,32 @@ const supabase = useSupabaseClient()
 const hiloID = route.params.id as string
 
 const { data, status, refresh } = await useAsyncData(`hilo-${hiloID}`, async () => {
-  const [hiloRes, movsRes] = await Promise.all([
+  const [hiloRes, movsRes, resumenRes] = await Promise.all([
     supabase.from('hilos').select('*').eq('id', hiloID).single(),
     supabase
       .from('movimientos_hilo')
       .select('*, proyecto:proyecto_id(nombre)')
       .eq('hilo_id', hiloID)
       .order('created_at', { ascending: false }),
+    // La cantidad_inicial solo la expone la vista resumen_hilos (como en iOS).
+    supabase.from('resumen_hilos').select('cantidad_inicial').eq('id', hiloID).maybeSingle(),
   ])
   if (hiloRes.error) throw hiloRes.error
-  return { hilo: hiloRes.data as any, movimientos: (movsRes.data ?? []) as any[] }
+  return {
+    hilo: hiloRes.data as any,
+    movimientos: (movsRes.data ?? []) as any[],
+    cantidadInicial: (resumenRes.data as any)?.cantidad_inicial ?? null,
+  }
 })
 
 const hilo = computed(() => data.value?.hilo)
 const movimientos = computed(() => data.value?.movimientos ?? [])
+const cantidadInicial = computed(() => data.value?.cantidadInicial)
+
+const porcentaje = computed(() => {
+  if (!cantidadInicial.value || !hilo.value) return null
+  return Math.max(0, Math.min(100, (hilo.value.cantidad_actual / cantidadInicial.value) * 100))
+})
 
 // --- Usar / Reponer ---
 const modal = ref<'usar' | 'reponer' | null>(null)
@@ -26,6 +38,51 @@ const nota = ref('')
 const proyectoID = ref('')
 const procesando = ref(false)
 const error = ref<string | null>(null)
+
+// Modo de unidad al usar: la propia del hilo, la alterna (g↔m) u ovillos
+// completos — mismas reglas de conversión que la app iOS.
+type ModoUso = 'unidad' | 'alterna' | 'ovillo'
+const modo = ref<ModoUso>('unidad')
+
+const modosDisponibles = computed<ModoUso[]>(() => {
+  const h = hilo.value
+  if (!h) return ['unidad']
+  const modos: ModoUso[] = ['unidad']
+  const esGM = h.unidad === 'g' || h.unidad === 'm'
+  if (esGM && h.peso_por_ovillo > 0 && h.metros_por_ovillo > 0) modos.push('alterna')
+  if ((h.unidad === 'g' && h.peso_por_ovillo > 0) || (h.unidad === 'm' && h.metros_por_ovillo > 0)) {
+    modos.push('ovillo')
+  }
+  return modos
+})
+
+function etiquetaModo(m: ModoUso): string {
+  const h = hilo.value
+  if (m === 'unidad') return h?.unidad || 'unidad'
+  if (m === 'alterna') return h?.unidad === 'g' ? 'm' : 'g'
+  return 'ovillos'
+}
+
+const cantidadConvertida = computed(() => {
+  const h = hilo.value
+  if (!h || modo.value === 'unidad') return cantidad.value
+  if (modo.value === 'alterna') {
+    if (!h.peso_por_ovillo || !h.metros_por_ovillo) return cantidad.value
+    return h.unidad === 'g'
+      ? cantidad.value * (h.peso_por_ovillo / h.metros_por_ovillo)
+      : cantidad.value * (h.metros_por_ovillo / h.peso_por_ovillo)
+  }
+  return h.unidad === 'g' ? cantidad.value * h.peso_por_ovillo : cantidad.value * h.metros_por_ovillo
+})
+
+const stockInsuficiente = computed(() =>
+  modal.value === 'usar' && !!hilo.value && cantidadConvertida.value > hilo.value.cantidad_actual,
+)
+
+watch(modo, (m) => {
+  // "1 ovillo completo" como punto de partida natural.
+  if (m === 'ovillo') cantidad.value = 1
+})
 
 const { data: proyectos } = await useAsyncData('proyectos-select', async () => {
   const { data: d } = await supabase.from('proyectos').select('id, nombre').order('nombre')
@@ -37,8 +94,15 @@ function abrirModal(tipo: 'usar' | 'reponer') {
   nota.value = ''
   proyectoID.value = ''
   error.value = null
+  modo.value = 'unidad'
   modal.value = tipo
 }
+
+// Los botones rápidos de la lista llegan con ?accion=usar|reponer
+onMounted(() => {
+  const accion = route.query.accion
+  if (accion === 'usar' || accion === 'reponer') abrirModal(accion)
+})
 
 async function confirmarModal() {
   error.value = null
@@ -48,7 +112,7 @@ async function confirmarModal() {
     if (modal.value === 'usar') {
       const { error: e } = await supabase.rpc('usar_hilo', {
         p_hilo_id: hiloID,
-        p_cantidad: String(cantidad.value),
+        p_cantidad: String(cantidadConvertida.value),
         p_proyecto_id: proyectoID.value || '',
         p_nota: nota.value || '',
       })
@@ -94,7 +158,7 @@ const tipoLabel: Record<string, string> = {
       <div class="flex gap-2">
         <NuxtLink
           :to="`/hilos/${hiloID}/editar`"
-          class="rounded-xl border border-borde bg-white px-3 py-1.5 text-sm"
+          class="rounded-xl border border-borde bg-blanco px-3 py-1.5 text-sm"
         >
           Editar
         </NuxtLink>
@@ -111,7 +175,7 @@ const tipoLabel: Record<string, string> = {
 
     <template v-else-if="hilo">
       <!-- Card principal -->
-      <section class="rounded-2xl border border-borde bg-white p-5 text-center">
+      <section class="rounded-2xl border border-borde bg-blanco p-5 text-center">
         <img
           v-if="hilo.imagen_url"
           :src="hilo.imagen_url"
@@ -130,6 +194,19 @@ const tipoLabel: Record<string, string> = {
         <p class="mt-4 text-4xl font-bold">
           {{ hilo.cantidad_actual.toFixed(1) }} {{ hilo.unidad }}
         </p>
+
+        <template v-if="cantidadInicial">
+          <p class="mt-1 text-sm text-texto2">
+            de {{ cantidadInicial.toFixed(1) }} {{ hilo.unidad }}
+          </p>
+          <div class="mx-6 mt-3 h-2 overflow-hidden rounded-full bg-crema">
+            <div
+              class="h-full rounded-full"
+              :class="(porcentaje ?? 100) < 30 ? 'bg-poco-text' : 'bg-verde-text'"
+              :style="{ width: `${porcentaje}%` }"
+            />
+          </div>
+        </template>
 
         <p
           v-if="hilo.cantidad_minima && hilo.cantidad_actual <= hilo.cantidad_minima"
@@ -180,7 +257,7 @@ const tipoLabel: Record<string, string> = {
           <li
             v-for="mov in movimientos"
             :key="mov.id"
-            class="flex items-center gap-3 rounded-2xl border border-borde bg-white p-3"
+            class="flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-3"
           >
             <span
               class="flex h-9 w-9 items-center justify-center rounded-full text-sm"
@@ -217,20 +294,40 @@ const tipoLabel: Record<string, string> = {
           {{ modal === 'usar' ? '✂️ Usar hilo' : '＋ Reponer hilo' }}
         </h3>
 
-        <label class="mb-3 block text-sm text-texto2">
-          Cantidad ({{ hilo?.unidad }})
+        <!-- Selector de unidad (solo al usar y si hay datos de ovillo) -->
+        <div v-if="modal === 'usar' && modosDisponibles.length > 1" class="mb-3 flex gap-2">
+          <button
+            v-for="m in modosDisponibles" :key="m"
+            class="flex-1 rounded-xl border py-2 text-sm font-medium"
+            :class="modo === m ? 'border-rosa bg-rosa-pastel text-rosa' : 'border-borde bg-blanco text-texto2'"
+            @click="modo = m"
+          >
+            {{ etiquetaModo(m) }}
+          </button>
+        </div>
+
+        <label class="mb-1 block text-sm text-texto2">
+          Cantidad ({{ modal === 'usar' ? etiquetaModo(modo) : hilo?.unidad }})
           <input
             v-model.number="cantidad"
             type="number" min="0" step="any"
-            class="mt-1 w-full rounded-xl border border-borde bg-white px-3 py-2.5 outline-none focus:border-rosa"
+            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
           >
         </label>
+
+        <p v-if="modal === 'usar' && modo !== 'unidad'" class="mb-2 text-center text-xs text-texto2">
+          ≈ {{ cantidadConvertida.toFixed(1) }} {{ hilo?.unidad }}
+        </p>
+        <p v-if="stockInsuficiente" class="mb-2 text-xs text-poco-text">
+          No tienes suficiente cantidad. Disponible: {{ hilo?.cantidad_actual.toFixed(1) }} {{ hilo?.unidad }}
+        </p>
+        <div class="mb-2" />
 
         <label v-if="modal === 'usar' && proyectos?.length" class="mb-3 block text-sm text-texto2">
           Proyecto (opcional)
           <select
             v-model="proyectoID"
-            class="mt-1 w-full rounded-xl border border-borde bg-white px-3 py-2.5 outline-none focus:border-rosa"
+            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
           >
             <option value="">Sin proyecto</option>
             <option v-for="p in proyectos" :key="p.id" :value="p.id">{{ p.nombre }}</option>
@@ -241,23 +338,23 @@ const tipoLabel: Record<string, string> = {
           Nota (opcional)
           <input
             v-model="nota"
-            class="mt-1 w-full rounded-xl border border-borde bg-white px-3 py-2.5 outline-none focus:border-rosa"
+            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
           >
         </label>
 
         <p v-if="error" class="mb-3 rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>
 
         <div class="flex gap-3">
-          <button class="flex-1 rounded-2xl border border-borde bg-white py-3" @click="modal = null">
+          <button class="flex-1 rounded-2xl border border-borde bg-blanco py-3" @click="modal = null">
             Cancelar
           </button>
           <button
-            :disabled="procesando || cantidad <= 0"
+            :disabled="procesando || cantidad <= 0 || stockInsuficiente"
             class="flex-1 rounded-2xl py-3 font-semibold text-white disabled:opacity-40"
             :class="modal === 'usar' ? 'bg-durazno-text' : 'bg-verde-text'"
             @click="confirmarModal"
           >
-            {{ procesando ? 'Registrando…' : 'Confirmar' }}
+            {{ procesando ? 'Registrando…' : stockInsuficiente ? 'Stock insuficiente' : 'Confirmar' }}
           </button>
         </div>
       </div>
@@ -267,7 +364,7 @@ const tipoLabel: Record<string, string> = {
 
 <style scoped>
 .celda {
-  @apply rounded-2xl border border-borde bg-white p-3 text-sm font-medium;
+  @apply rounded-2xl border border-borde bg-blanco p-3 text-sm font-medium;
 }
 .celda span {
   @apply block text-xs font-normal text-texto2;
