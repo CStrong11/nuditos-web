@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ layout: false })
+
 // Página de aterrizaje del OAuth: el módulo de Supabase procesa el callback
 // y cuando la sesión está lista redirigimos al inicio.
 const user = useSupabaseUser()
