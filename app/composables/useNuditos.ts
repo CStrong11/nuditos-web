@@ -12,6 +12,25 @@ export function dinero(v: number): string {
   return '$' + new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 }).format(v)
 }
 
+/// Equivalente en ovillos de una cantidad, según la unidad del hilo y sus
+/// datos de ovillo. null si el hilo no tiene el dato necesario.
+export function ovillosDe(
+  cantidad: number,
+  unidad: string,
+  pesoPorOvillo?: number | null,
+  metrosPorOvillo?: number | null,
+): number | null {
+  if (unidad === 'g' && pesoPorOvillo) return cantidad / pesoPorOvillo
+  if (unidad === 'm' && metrosPorOvillo) return cantidad / metrosPorOvillo
+  return null
+}
+
+export function formatoOvillos(n: number): string {
+  const redondeado = Math.round(n * 10) / 10
+  const texto = Number.isInteger(redondeado) ? String(redondeado) : redondeado.toFixed(1)
+  return `${texto} ${redondeado === 1 ? 'ovillo' : 'ovillos'}`
+}
+
 export const GROSOR_LABELS = [
   '0 Lace', '1 Super Fine', '2 Fine', '3 Light/DK',
   '4 Medium/Worsted', '5 Bulky', '6 Super Bulky', '7 Jumbo',

@@ -31,6 +31,22 @@ const { data: etiquetas } = await useAsyncData('etiquetas', async () => {
   return (data ?? []) as { id: string, nombre: string }[]
 })
 
+// La vista resumen_hilos no expone los datos de ovillo; se traen aparte
+// para mostrar el equivalente en ovillos de cada hilo.
+const { data: datosOvillo } = await useAsyncData('hilos-ovillos', async () => {
+  const { data } = await supabase.from('hilos').select('id, peso_por_ovillo, metros_por_ovillo')
+  const mapa: Record<string, { peso: number | null, metros: number | null }> = {}
+  for (const h of (data ?? []) as any[]) {
+    mapa[h.id] = { peso: h.peso_por_ovillo, metros: h.metros_por_ovillo }
+  }
+  return mapa
+})
+
+function ovillosHilo(h: ResumenHilo): number | null {
+  const d = datosOvillo.value?.[h.id]
+  return d ? ovillosDe(h.cantidad, h.unidad, d.peso, d.metros) : null
+}
+
 function toggleTag(id: string) {
   const s = new Set(tagsSeleccionados.value)
   s.has(id) ? s.delete(id) : s.add(id)
@@ -125,7 +141,7 @@ function porcentaje(h: ResumenHilo): number {
             <div class="min-w-0 flex-1">
               <p class="truncate font-semibold">{{ hilo.nombre }}</p>
               <p class="text-sm text-texto2">
-                {{ hilo.marca ?? 'Sin marca' }} · {{ hilo.cantidad.toFixed(1) }} {{ hilo.unidad }}
+                {{ hilo.marca ?? 'Sin marca' }} · {{ hilo.cantidad.toFixed(1) }} {{ hilo.unidad }}<template v-if="ovillosHilo(hilo) != null"> · ≈ {{ formatoOvillos(ovillosHilo(hilo)!) }}</template>
               </p>
             </div>
 

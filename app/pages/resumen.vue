@@ -2,17 +2,31 @@
 const supabase = useSupabaseClient()
 
 const { data, status } = await useAsyncData('resumen-stats', async () => {
-  const [mensualRes, porProyectoRes, hilosRes] = await Promise.all([
+  const [mensualRes, porProyectoRes, resumenRes, hilosRes] = await Promise.all([
     supabase.from('consumo_mensual').select('*').order('mes', { ascending: false }),
     supabase.from('consumo_por_proyecto').select('*').order('consumo_total', { ascending: false }),
     supabase.from('resumen_hilos').select('id, stock_bajo'),
+    supabase.from('hilos').select('unidad, cantidad_actual, peso_por_ovillo, metros_por_ovillo'),
   ])
+  const resumen = (resumenRes.data ?? []) as any[]
   const hilos = (hilosRes.data ?? []) as any[]
+
+  // Total en unidades de ovillo (solo hilos con dato de ovillo cargado)
+  let totalOvillos = 0
+  let hilosSinDatoOvillo = 0
+  for (const h of hilos) {
+    const ov = ovillosDe(h.cantidad_actual, h.unidad, h.peso_por_ovillo, h.metros_por_ovillo)
+    if (ov != null) totalOvillos += ov
+    else hilosSinDatoOvillo++
+  }
+
   return {
     mensual: (mensualRes.data ?? []) as any[],
     porProyecto: (porProyectoRes.data ?? []) as any[],
-    totalHilos: hilos.length,
-    stockBajo: hilos.filter(h => h.stock_bajo).length,
+    totalHilos: resumen.length,
+    stockBajo: resumen.filter(h => h.stock_bajo).length,
+    totalOvillos,
+    hilosSinDatoOvillo,
   }
 })
 
@@ -42,10 +56,19 @@ function nombreMes(mes: string): string {
 
     <template v-else-if="data">
       <!-- Totales -->
-      <div class="mb-6 grid grid-cols-2 gap-3">
+      <div class="mb-6 grid grid-cols-3 gap-3">
         <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
           <p class="text-3xl font-bold text-rosa">{{ data.totalHilos }}</p>
-          <p class="text-xs text-texto2">hilos en inventario</p>
+          <p class="text-xs text-texto2">hilos distintos</p>
+        </div>
+        <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
+          <p class="text-3xl font-bold text-rosa">
+            {{ Number.isInteger(Math.round(data.totalOvillos * 10) / 10) ? Math.round(data.totalOvillos) : data.totalOvillos.toFixed(1) }}
+          </p>
+          <p class="text-xs text-texto2">ovillos en total</p>
+          <p v-if="data.hilosSinDatoOvillo" class="mt-0.5 text-[10px] text-texto2/60">
+            sin contar {{ data.hilosSinDatoOvillo }} sin dato de ovillo
+          </p>
         </div>
         <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
           <p class="text-3xl font-bold" :class="data.stockBajo ? 'text-poco-text' : 'text-verde-text'">

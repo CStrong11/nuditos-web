@@ -195,6 +195,13 @@ const tipoLabel: Record<string, string> = {
           {{ hilo.cantidad_actual.toFixed(1) }} {{ hilo.unidad }}
         </p>
 
+        <p
+          v-if="ovillosDe(hilo.cantidad_actual, hilo.unidad, hilo.peso_por_ovillo, hilo.metros_por_ovillo) != null"
+          class="mt-1 text-sm font-medium text-rosa"
+        >
+          ≈ {{ formatoOvillos(ovillosDe(hilo.cantidad_actual, hilo.unidad, hilo.peso_por_ovillo, hilo.metros_por_ovillo)!) }}
+        </p>
+
         <template v-if="cantidadInicial">
           <p class="mt-1 text-sm text-texto2">
             de {{ cantidadInicial.toFixed(1) }} {{ hilo.unidad }}
