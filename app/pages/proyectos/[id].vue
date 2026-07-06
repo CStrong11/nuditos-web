@@ -66,15 +66,18 @@ const estadoLabel: Record<string, string> = {
 const modalEditar = ref(false)
 const edicion = reactive({ nombre: '', descripcion: '', estado: 'en_progreso' })
 const guardando = ref(false)
+const errorEdicion = ref<string | null>(null)
 
 function abrirEditar() {
   edicion.nombre = proyecto.value.nombre
   edicion.descripcion = proyecto.value.descripcion ?? ''
   edicion.estado = proyecto.value.estado ?? 'en_progreso'
+  errorEdicion.value = null
   modalEditar.value = true
 }
 
 async function guardarEdicion() {
+  errorEdicion.value = null
   guardando.value = true
   const { error } = await supabase.from('proyectos').update({
     nombre: edicion.nombre,
@@ -82,16 +85,30 @@ async function guardarEdicion() {
     estado: edicion.estado,
   }).eq('id', proyectoID)
   guardando.value = false
-  if (error) { alert(error.message); return }
+  if (error) {
+    errorEdicion.value = error.message
+    return
+  }
   modalEditar.value = false
   await refresh()
   await refreshNuxtData('proyectos')
 }
 
+// --- Eliminar ---
+const modalEliminar = ref(false)
+const eliminando = ref(false)
+const errorEliminar = ref<string | null>(null)
+
 async function eliminar() {
-  if (!confirm('¿Eliminar proyecto?')) return
+  errorEliminar.value = null
+  eliminando.value = true
   const { error } = await supabase.from('proyectos').delete().eq('id', proyectoID)
-  if (error) { alert(error.message); return }
+  eliminando.value = false
+  if (error) {
+    errorEliminar.value = error.message
+    return
+  }
+  modalEliminar.value = false
   await refreshNuxtData('proyectos')
   navigateTo('/proyectos')
 }
@@ -108,7 +125,10 @@ async function eliminar() {
         <button class="rounded-xl border border-borde bg-blanco px-3 py-1.5 text-sm" @click="abrirEditar">
           Editar
         </button>
-        <button class="rounded-xl bg-poco-bg px-3 py-1.5 text-sm font-medium text-poco-text" @click="eliminar">
+        <button
+          class="rounded-xl bg-poco-bg px-3 py-1.5 text-sm font-medium text-poco-text"
+          @click="errorEliminar = null; modalEliminar = true"
+        >
           Eliminar
         </button>
       </div>
@@ -253,6 +273,10 @@ async function eliminar() {
           </button>
         </div>
 
+        <p v-if="errorEdicion" class="mb-3 rounded-xl bg-poco-bg px-4 py-2 text-sm text-poco-text">
+          {{ errorEdicion }}
+        </p>
+
         <div class="flex gap-3">
           <button class="flex-1 rounded-2xl border border-borde bg-blanco py-3" @click="modalEditar = false">
             Cancelar
@@ -267,5 +291,16 @@ async function eliminar() {
         </div>
       </div>
     </div>
+
+    <!-- Confirmación de eliminación -->
+    <ConfirmModal
+      :abierto="modalEliminar"
+      titulo="¿Eliminar proyecto?"
+      mensaje="Esta acción no se puede deshacer."
+      :procesando="eliminando"
+      :error="errorEliminar"
+      @confirmar="eliminar"
+      @cancelar="modalEliminar = false"
+    />
   </main>
 </template>

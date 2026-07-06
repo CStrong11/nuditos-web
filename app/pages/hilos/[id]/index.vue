@@ -136,10 +136,20 @@ async function confirmarModal() {
   }
 }
 
+const modalEliminar = ref(false)
+const eliminando = ref(false)
+const errorEliminar = ref<string | null>(null)
+
 async function eliminar() {
-  if (!confirm('¿Eliminar hilo? Se perderá el historial de movimientos.')) return
+  errorEliminar.value = null
+  eliminando.value = true
   const { error: e } = await supabase.from('hilos').delete().eq('id', hiloID)
-  if (e) { alert(e.message); return }
+  eliminando.value = false
+  if (e) {
+    errorEliminar.value = e.message
+    return
+  }
+  modalEliminar.value = false
   await refreshNuxtData('resumen_hilos')
   navigateTo('/')
 }
@@ -165,7 +175,7 @@ const tipoLabel: Record<string, string> = {
         </NuxtLink>
         <button
           class="rounded-xl bg-poco-bg px-3 py-1.5 text-sm font-medium text-poco-text"
-          @click="eliminar"
+          @click="errorEliminar = null; modalEliminar = true"
         >
           Eliminar
         </button>
@@ -367,6 +377,17 @@ const tipoLabel: Record<string, string> = {
         </div>
       </div>
     </div>
+
+    <!-- Confirmación de eliminación -->
+    <ConfirmModal
+      :abierto="modalEliminar"
+      titulo="¿Eliminar hilo?"
+      mensaje="Esta acción no se puede deshacer. Se perderá el historial de movimientos."
+      :procesando="eliminando"
+      :error="errorEliminar"
+      @confirmar="eliminar"
+      @cancelar="modalEliminar = false"
+    />
   </main>
 </template>
 
