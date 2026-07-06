@@ -39,6 +39,38 @@ watch(() => form.tipo_medida, (t) => {
   form.unidad = t === 'peso' ? 'g' : 'm'
 })
 
+// --- Stock mínimo en la unidad del hilo u ovillos ---
+// cantidad_minima siempre se guarda en la unidad (g/m); la UI permite
+// ingresarlo en ovillos y lo convierte usando el peso/metros por ovillo.
+const minimoUnidad = ref<'unidad' | 'ovillo'>('unidad')
+
+const factorOvillo = computed(() => {
+  if (form.unidad === 'g') return Number(form.peso_por_ovillo) || 0
+  if (form.unidad === 'm') return Number(form.metros_por_ovillo) || 0
+  return 0
+})
+const puedeOvillos = computed(() => factorOvillo.value > 0)
+
+// Si se quita el dato de ovillo, volver a la unidad.
+watch(puedeOvillos, (ok) => { if (!ok) minimoUnidad.value = 'unidad' })
+
+const minimoMostrado = computed<number | null>({
+  get() {
+    const min = form.cantidad_minima
+    if (min == null || min === ('' as any)) return null
+    if (minimoUnidad.value === 'ovillo' && factorOvillo.value > 0) {
+      return Math.round((Number(min) / factorOvillo.value) * 100) / 100
+    }
+    return Number(min)
+  },
+  set(v) {
+    if (v == null || (v as any) === '') { form.cantidad_minima = null; return }
+    form.cantidad_minima = minimoUnidad.value === 'ovillo' && factorOvillo.value > 0
+      ? Number(v) * factorOvillo.value
+      : Number(v)
+  },
+})
+
 function elegirFoto(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
@@ -192,18 +224,45 @@ async function guardar() {
           {{ u }}
         </button>
       </div>
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label v-if="!editando" class="text-sm text-texto2">
-          Cantidad inicial
-          <input v-model.number="form.cantidad" type="number" min="0" step="any" class="campo mt-1">
-        </label>
-        <p v-else class="self-end pb-1 text-xs text-texto2">
-          La cantidad actual se gestiona con usar/reponer
+      <label v-if="!editando" class="mb-3 block text-sm text-texto2">
+        Cantidad inicial
+        <input v-model.number="form.cantidad" type="number" min="0" step="any" class="campo mt-1">
+      </label>
+      <p v-else class="mb-3 text-xs text-texto2">
+        La cantidad actual se gestiona con usar/reponer
+      </p>
+
+      <div class="text-sm text-texto2">
+        <div class="mb-1 flex items-center justify-between">
+          <span>Stock mínimo</span>
+          <div v-if="puedeOvillos" class="flex gap-1">
+            <button
+              type="button"
+              class="rounded-lg px-2 py-0.5 text-xs font-medium"
+              :class="minimoUnidad === 'unidad' ? 'bg-rosa text-white' : 'text-texto2'"
+              @click="minimoUnidad = 'unidad'"
+            >
+              {{ form.unidad }}
+            </button>
+            <button
+              type="button"
+              class="rounded-lg px-2 py-0.5 text-xs font-medium"
+              :class="minimoUnidad === 'ovillo' ? 'bg-rosa text-white' : 'text-texto2'"
+              @click="minimoUnidad = 'ovillo'"
+            >
+              ovillos
+            </button>
+          </div>
+        </div>
+        <input
+          v-model.number="minimoMostrado"
+          type="number" min="0" step="any"
+          class="campo"
+          :placeholder="minimoUnidad === 'ovillo' ? 'ej. 1 ovillo' : `ej. 20 ${form.unidad}`"
+        >
+        <p v-if="minimoUnidad === 'ovillo' && form.cantidad_minima" class="mt-1 text-xs text-texto2/70">
+          = {{ Number(form.cantidad_minima).toFixed(1) }} {{ form.unidad }}
         </p>
-        <label class="text-sm text-texto2">
-          Stock mínimo
-          <input v-model.number="form.cantidad_minima" type="number" min="0" step="any" class="campo mt-1">
-        </label>
       </div>
     </div>
 
