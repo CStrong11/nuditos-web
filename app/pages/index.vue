@@ -47,6 +47,14 @@ function ovillosHilo(h: ResumenHilo): number | null {
   return d ? ovillosDe(h.cantidad, h.unidad, d.peso, d.metros) : null
 }
 
+// Stock bajo calculado en cliente (no depende del flag de la vista):
+// hay mínimo definido > 0 y la cantidad es menor o igual.
+function stockBajo(h: ResumenHilo): boolean {
+  const min = Number(h.cantidad_minima)
+  if (!min || Number.isNaN(min)) return !!h.stock_bajo
+  return Number(h.cantidad) <= min
+}
+
 function toggleTag(id: string) {
   const s = new Set(tagsSeleccionados.value)
   s.has(id) ? s.delete(id) : s.add(id)
@@ -80,9 +88,12 @@ function porcentaje(h: ResumenHilo): number {
 <template>
   <main class="mx-auto max-w-3xl px-4 py-8">
     <header class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-rosa">nuditos</h1>
-        <p class="text-sm text-texto2">{{ hilosFiltrados.length }} hilos</p>
+      <div class="flex items-center gap-2">
+        <img src="/nuditos-logo.png" alt="" class="h-10 w-auto">
+        <div>
+          <h1 class="text-2xl font-bold text-rosa">nuditos</h1>
+          <p class="text-sm text-texto2">{{ hilosFiltrados.length }} hilos</p>
+        </div>
       </div>
       <NuxtLink
         to="/hilos/nuevo"
@@ -146,7 +157,7 @@ function porcentaje(h: ResumenHilo): number {
             </div>
 
             <span
-              v-if="hilo.stock_bajo"
+              v-if="stockBajo(hilo)"
               class="shrink-0 rounded-lg bg-poco-bg px-2 py-1 text-xs font-semibold text-poco-text"
             >
               Stock bajo
@@ -172,7 +183,7 @@ function porcentaje(h: ResumenHilo): number {
           <div class="mt-3 h-2 overflow-hidden rounded-full bg-crema">
             <div
               class="h-full rounded-full"
-              :class="hilo.stock_bajo ? 'bg-poco-text' : 'bg-verde-text'"
+              :class="stockBajo(hilo) ? 'bg-poco-text' : 'bg-verde-text'"
               :style="{ width: `${porcentaje(hilo)}%` }"
             />
           </div>

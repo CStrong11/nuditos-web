@@ -31,6 +31,16 @@ const porcentaje = computed(() => {
   return Math.max(0, Math.min(100, (hilo.value.cantidad_actual / cantidadInicial.value) * 100))
 })
 
+// Stock bajo: comparación numérica explícita (los numeric de Postgres pueden
+// llegar como string). Se marca cuando hay un mínimo definido > 0.
+const stockBajo = computed(() => {
+  const h = hilo.value
+  if (!h) return false
+  const min = Number(h.cantidad_minima)
+  if (!min || Number.isNaN(min)) return false
+  return Number(h.cantidad_actual) <= min
+})
+
 // --- Usar / Reponer ---
 const modal = ref<'usar' | 'reponer' | null>(null)
 const cantidad = ref(1)
@@ -112,8 +122,9 @@ async function confirmarModal() {
     if (modal.value === 'usar') {
       const { error: e } = await supabase.rpc('usar_hilo', {
         p_hilo_id: hiloID,
+        // null (no ''): Postgres no puede castear '' a uuid
+        p_proyecto_id: proyectoID.value || null,
         p_cantidad: String(cantidadConvertida.value),
-        p_proyecto_id: proyectoID.value || '',
         p_nota: nota.value || '',
       })
       if (e) throw e
@@ -227,7 +238,7 @@ const tipoLabel: Record<string, string> = {
         </template>
 
         <p
-          v-if="hilo.cantidad_minima && hilo.cantidad_actual <= hilo.cantidad_minima"
+          v-if="stockBajo"
           class="mt-2 text-sm font-medium text-poco-text"
         >
           ⚠️ Stock bajo — considera reponer

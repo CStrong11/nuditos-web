@@ -106,6 +106,7 @@ async function entrarConGoogle() {
   <main class="flex min-h-screen items-center justify-center px-4">
     <div class="w-full max-w-sm">
       <div class="mb-8 text-center">
+        <img src="/nuditos-logo.png" alt="Nuditos" class="mx-auto mb-3 h-24 w-auto">
         <h1 class="text-4xl font-bold text-rosa">nuditos</h1>
         <p class="mt-1 text-sm text-texto2">{{ subtitulo }}</p>
       </div>

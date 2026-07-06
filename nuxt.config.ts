@@ -23,6 +23,7 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#FBF6EE' },
       ],
       link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
         { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
       ],
     },
