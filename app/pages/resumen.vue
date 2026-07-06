@@ -1,15 +1,27 @@
 <script setup lang="ts">
 const supabase = useSupabaseClient()
 
+const tab = ref<'general' | 'porHilo'>('general')
+
+interface HiloResumen {
+  id: string
+  nombre: string
+  unidad: string
+  stock: string[]
+  consumo: string[] | null
+  stockBajo: boolean
+}
+
 const { data, status } = await useAsyncData('resumen-stats', async () => {
   const [mensualRes, porProyectoRes, resumenRes, hilosRes] = await Promise.all([
     supabase.from('consumo_mensual').select('*').order('mes', { ascending: false }),
     supabase.from('consumo_por_proyecto').select('*').order('consumo_total', { ascending: false }),
-    supabase.from('resumen_hilos').select('id, stock_bajo'),
-    supabase.from('hilos').select('unidad, cantidad_actual, peso_por_ovillo, metros_por_ovillo'),
+    supabase.from('resumen_hilos').select('id, stock_bajo, consumo_total'),
+    supabase.from('hilos').select('id, nombre, unidad, cantidad_actual, peso_por_ovillo, metros_por_ovillo').order('nombre'),
   ])
   const resumen = (resumenRes.data ?? []) as any[]
   const hilos = (hilosRes.data ?? []) as any[]
+  const resumenPorID = new Map(resumen.map(r => [r.id, r]))
 
   // Total en unidades de ovillo (solo hilos con dato de ovillo cargado)
   let totalOvillos = 0
@@ -20,6 +32,22 @@ const { data, status } = await useAsyncData('resumen-stats', async () => {
     else hilosSinDatoOvillo++
   }
 
+  // Detalle por hilo: stock y consumo en todas las medidas computables
+  const porHilo: HiloResumen[] = hilos.map((h) => {
+    const r = resumenPorID.get(h.id)
+    const consumoTotal = r?.consumo_total ?? 0
+    return {
+      id: h.id,
+      nombre: h.nombre,
+      unidad: h.unidad,
+      stock: medidasDe(h.cantidad_actual, h.unidad, h.peso_por_ovillo, h.metros_por_ovillo),
+      consumo: consumoTotal > 0
+        ? medidasDe(consumoTotal, h.unidad, h.peso_por_ovillo, h.metros_por_ovillo)
+        : null,
+      stockBajo: !!r?.stock_bajo,
+    }
+  })
+
   return {
     mensual: (mensualRes.data ?? []) as any[],
     porProyecto: (porProyectoRes.data ?? []) as any[],
@@ -27,6 +55,7 @@ const { data, status } = await useAsyncData('resumen-stats', async () => {
     stockBajo: resumen.filter(h => h.stock_bajo).length,
     totalOvillos,
     hilosSinDatoOvillo,
+    porHilo,
   }
 })
 
@@ -55,6 +84,63 @@ function nombreMes(mes: string): string {
     <p v-if="status === 'pending'" class="py-12 text-center text-texto2">Cargando…</p>
 
     <template v-else-if="data">
+      <!-- Pestañas -->
+      <div class="mb-6 flex rounded-xl border border-borde bg-blanco p-1">
+        <button
+          class="flex-1 rounded-lg py-2 text-sm font-medium"
+          :class="tab === 'general' ? 'bg-rosa-pastel text-rosa' : 'text-texto2'"
+          @click="tab = 'general'"
+        >
+          General
+        </button>
+        <button
+          class="flex-1 rounded-lg py-2 text-sm font-medium"
+          :class="tab === 'porHilo' ? 'bg-rosa-pastel text-rosa' : 'text-texto2'"
+          @click="tab = 'porHilo'"
+        >
+          Por hilo
+        </button>
+      </div>
+
+      <!-- ===== Pestaña: Por hilo ===== -->
+      <template v-if="tab === 'porHilo'">
+        <p v-if="!data.porHilo.length" class="py-12 text-center text-texto2">
+          No hay hilos aún
+        </p>
+        <ul v-else class="space-y-3">
+          <li
+            v-for="h in data.porHilo" :key="h.id"
+            class="rounded-2xl border border-borde bg-blanco p-4"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <NuxtLink :to="`/hilos/${h.id}`" class="truncate font-semibold hover:text-rosa">
+                {{ h.nombre }}
+              </NuxtLink>
+              <span
+                v-if="h.stockBajo"
+                class="shrink-0 rounded-lg bg-poco-bg px-2 py-0.5 text-xs font-semibold text-poco-text"
+              >
+                Stock bajo
+              </span>
+            </div>
+
+            <div class="mt-2 grid gap-1 text-sm">
+              <p>
+                <span class="text-texto2">En stock:</span>
+                <span class="font-medium"> {{ h.stock.join(' · ') }}</span>
+              </p>
+              <p v-if="h.consumo">
+                <span class="text-texto2">Consumido:</span>
+                <span class="font-medium text-durazno-text"> {{ h.consumo.join(' · ') }}</span>
+              </p>
+              <p v-else class="text-xs text-texto2/60">Sin consumo registrado</p>
+            </div>
+          </li>
+        </ul>
+      </template>
+
+      <!-- ===== Pestaña: General ===== -->
+      <template v-else>
       <!-- Totales -->
       <div class="mb-6 grid grid-cols-3 gap-3">
         <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
@@ -125,6 +211,7 @@ function nombreMes(mes: string): string {
           </li>
         </ul>
       </section>
+      </template>
     </template>
   </main>
 </template>

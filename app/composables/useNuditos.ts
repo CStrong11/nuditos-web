@@ -31,6 +31,24 @@ export function formatoOvillos(n: number): string {
   return `${texto} ${redondeado === 1 ? 'ovillo' : 'ovillos'}`
 }
 
+/// Una cantidad expresada en todas las medidas computables del hilo:
+/// su unidad propia, la alterna (g↔m si tiene ambos datos de ovillo) y ovillos.
+export function medidasDe(
+  cantidad: number,
+  unidad: string,
+  pesoPorOvillo?: number | null,
+  metrosPorOvillo?: number | null,
+): string[] {
+  const partes = [`${cantidad.toFixed(1)} ${unidad}`]
+  if (pesoPorOvillo && metrosPorOvillo) {
+    if (unidad === 'g') partes.push(`${(cantidad * metrosPorOvillo / pesoPorOvillo).toFixed(1)} m`)
+    else if (unidad === 'm') partes.push(`${(cantidad * pesoPorOvillo / metrosPorOvillo).toFixed(1)} g`)
+  }
+  const ovillos = ovillosDe(cantidad, unidad, pesoPorOvillo, metrosPorOvillo)
+  if (ovillos != null) partes.push(formatoOvillos(ovillos))
+  return partes
+}
+
 export const GROSOR_LABELS = [
   '0 Lace', '1 Super Fine', '2 Fine', '3 Light/DK',
   '4 Medium/Worsted', '5 Bulky', '6 Super Bulky', '7 Jumbo',

@@ -118,9 +118,10 @@ async function confirmarModal() {
       })
       if (e) throw e
     } else {
+      // También convertida: se puede reponer en g/m/ovillos indistintamente.
       const { error: e } = await supabase.rpc('reponer_hilo', {
         p_hilo_id: hiloID,
-        p_cantidad: String(cantidad.value),
+        p_cantidad: String(cantidadConvertida.value),
         p_nota: nota.value || '',
       })
       if (e) throw e
@@ -301,8 +302,8 @@ const tipoLabel: Record<string, string> = {
           {{ modal === 'usar' ? '✂️ Usar hilo' : '＋ Reponer hilo' }}
         </h3>
 
-        <!-- Selector de unidad (solo al usar y si hay datos de ovillo) -->
-        <div v-if="modal === 'usar' && modosDisponibles.length > 1" class="mb-3 flex gap-2">
+        <!-- Selector de unidad (usar y reponer, si hay datos de ovillo) -->
+        <div v-if="modosDisponibles.length > 1" class="mb-3 flex gap-2">
           <button
             v-for="m in modosDisponibles" :key="m"
             class="flex-1 rounded-xl border py-2 text-sm font-medium"
@@ -314,7 +315,7 @@ const tipoLabel: Record<string, string> = {
         </div>
 
         <label class="mb-1 block text-sm text-texto2">
-          Cantidad ({{ modal === 'usar' ? etiquetaModo(modo) : hilo?.unidad }})
+          Cantidad ({{ etiquetaModo(modo) }})
           <input
             v-model.number="cantidad"
             type="number" min="0" step="any"
@@ -322,7 +323,7 @@ const tipoLabel: Record<string, string> = {
           >
         </label>
 
-        <p v-if="modal === 'usar' && modo !== 'unidad'" class="mb-2 text-center text-xs text-texto2">
+        <p v-if="modo !== 'unidad'" class="mb-2 text-center text-xs text-texto2">
           ≈ {{ cantidadConvertida.toFixed(1) }} {{ hilo?.unidad }}
         </p>
         <p v-if="stockInsuficiente" class="mb-2 text-xs text-poco-text">

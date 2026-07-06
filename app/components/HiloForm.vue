@@ -197,6 +197,9 @@ async function guardar() {
           Cantidad inicial
           <input v-model.number="form.cantidad" type="number" min="0" step="any" class="campo mt-1">
         </label>
+        <p v-else class="self-end pb-1 text-xs text-texto2">
+          La cantidad actual se gestiona con usar/reponer
+        </p>
         <label class="text-sm text-texto2">
           Stock mínimo
           <input v-model.number="form.cantidad_minima" type="number" min="0" step="any" class="campo mt-1">
