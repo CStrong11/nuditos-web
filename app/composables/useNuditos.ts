@@ -49,9 +49,11 @@ export function medidasDe(
   return partes
 }
 
+// El índice (0-7) es lo que se guarda; la etiqueta es solo para mostrar.
+// Se mantiene entre paréntesis el nombre estándar internacional cuando aplica.
 export const GROSOR_LABELS = [
-  '0 Lace', '1 Super Fine', '2 Fine', '3 Light/DK',
-  '4 Medium/Worsted', '5 Bulky', '6 Super Bulky', '7 Jumbo',
+  '0 Encaje', '1 Súper fino', '2 Fino', '3 Ligero (DK)',
+  '4 Medio (Worsted)', '5 Grueso', '6 Súper grueso', '7 Jumbo',
 ]
 
 export interface GastoMovimiento {
