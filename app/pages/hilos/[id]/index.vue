@@ -239,9 +239,9 @@ const tipoLabel: Record<string, string> = {
 
         <p
           v-if="stockBajo"
-          class="mt-2 text-sm font-medium text-poco-text"
+          class="mx-auto mt-3 flex w-fit items-center gap-1.5 rounded-full bg-poco-bg px-3 py-1.5 text-sm font-semibold text-poco-text"
         >
-          ⚠️ Stock bajo — considera reponer
+          <span class="text-base">⚠️</span> Stock bajo — considera reponer
         </p>
 
         <div class="mt-5 flex gap-3">

@@ -137,21 +137,31 @@ function porcentaje(h: ResumenHilo): number {
           class="block rounded-2xl border border-borde bg-blanco p-4 transition hover:border-rosa"
         >
           <div class="flex items-center gap-4">
-            <img
-              v-if="hilo.imagen_url"
-              :src="hilo.imagen_url"
-              :alt="hilo.nombre"
-              class="h-12 w-12 rounded-xl object-cover"
-            >
-            <div
-              v-else
-              class="h-12 w-12 rounded-xl"
-              :style="{ backgroundColor: hilo.color ?? '#D6E6F2' }"
-            />
+            <div class="relative shrink-0">
+              <img
+                v-if="hilo.imagen_url"
+                :src="hilo.imagen_url"
+                :alt="hilo.nombre"
+                class="h-12 w-12 rounded-xl object-cover"
+              >
+              <div
+                v-else
+                class="h-12 w-12 rounded-xl"
+                :style="{ backgroundColor: hilo.color ?? '#D6E6F2' }"
+              />
+              <!-- Ícono de alerta cuando el stock está bajo el mínimo -->
+              <span
+                v-if="stockBajo(hilo)"
+                class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-blanco bg-poco-text text-[11px] font-bold text-white shadow"
+                title="Stock bajo"
+              >
+                !
+              </span>
+            </div>
 
             <div class="min-w-0 flex-1">
               <p class="truncate font-semibold">{{ hilo.nombre }}</p>
-              <p class="text-sm text-texto2">
+              <p class="text-sm" :class="stockBajo(hilo) ? 'font-medium text-poco-text' : 'text-texto2'">
                 {{ hilo.marca ?? 'Sin marca' }} · {{ hilo.cantidad.toFixed(1) }} {{ hilo.unidad }}<template v-if="ovillosHilo(hilo) != null"> · ≈ {{ formatoOvillos(ovillosHilo(hilo)!) }}</template>
               </p>
             </div>
