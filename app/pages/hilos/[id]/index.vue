@@ -336,11 +336,14 @@ const tipoLabel: Record<string, string> = {
         </div>
 
         <label class="mb-1 block text-sm text-texto2">
-          Cantidad ({{ etiquetaModo(modo) }})
+          {{ modal === 'usar' ? 'Cantidad que usaste' : 'Cantidad que agregaste' }} ({{ etiquetaModo(modo) }})
           <input
             v-model.number="cantidad"
             type="number" min="0" step="any"
-            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
+            :placeholder="modal === 'usar'
+              ? `Ingresa el hilo que utilizaste (en ${etiquetaModo(modo)})`
+              : `Ingresa el hilo que agregaste (en ${etiquetaModo(modo)})`"
+            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none placeholder:text-texto2/60 focus:border-rosa"
           >
         </label>
 

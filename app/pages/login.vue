@@ -13,6 +13,7 @@ const nombre = ref('')
 const cargando = ref(false)
 const error = ref<string | null>(null)
 const info = ref<string | null>(null)
+const mostrarPassword = ref(false)
 
 watch(user, (u) => {
   if (u) navigateTo('/')
@@ -127,14 +128,34 @@ async function entrarConGoogle() {
           autocomplete="username"
           class="w-full rounded-2xl border border-borde bg-blanco px-4 py-3 outline-none placeholder:text-texto2/70 focus:border-rosa"
         >
-        <input
-          v-if="modo !== 'olvide'"
-          v-model="password"
-          type="password"
-          placeholder="Contraseña"
-          :autocomplete="modo === 'registro' ? 'new-password' : 'current-password'"
-          class="w-full rounded-2xl border border-borde bg-blanco px-4 py-3 outline-none placeholder:text-texto2/70 focus:border-rosa"
-        >
+        <div v-if="modo !== 'olvide'" class="relative">
+          <input
+            v-model="password"
+            :type="mostrarPassword ? 'text' : 'password'"
+            placeholder="Contraseña"
+            :autocomplete="modo === 'registro' ? 'new-password' : 'current-password'"
+            class="w-full rounded-2xl border border-borde bg-blanco px-4 py-3 pr-12 outline-none placeholder:text-texto2/70 focus:border-rosa"
+          >
+          <button
+            type="button"
+            :aria-label="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-texto2 hover:text-rosa"
+            @click="mostrarPassword = !mostrarPassword"
+          >
+            <!-- Ojo abierto -->
+            <svg v-if="mostrarPassword" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <!-- Ojo cerrado (tachado) -->
+            <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+              <path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+              <path d="M14.12 14.12A3 3 0 1 1 9.88 9.88" />
+              <line x1="2" y1="2" x2="22" y2="22" />
+            </svg>
+          </button>
+        </div>
 
         <p v-if="error" class="rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>
         <p v-if="info" class="rounded-xl bg-verde-bg px-4 py-2 text-sm text-verde-text">{{ info }}</p>
