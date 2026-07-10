@@ -319,9 +319,14 @@ const tipoLabel: Record<string, string> = {
       @click.self="modal = null"
     >
       <div class="w-full max-w-md rounded-t-3xl bg-crema p-6 sm:rounded-3xl">
-        <h3 class="mb-4 text-center text-lg font-bold">
+        <h3 class="text-center text-lg font-bold">
           {{ modal === 'usar' ? '✂️ Usar hilo' : '＋ Reponer hilo' }}
         </h3>
+        <p class="mb-4 mt-1 text-center text-xs text-texto2">
+          {{ modal === 'usar'
+            ? 'Ingresa cuánto hilo usaste, no lo que te queda'
+            : 'Ingresa cuánto hilo agregaste al inventario' }}
+        </p>
 
         <!-- Selector de unidad (usar y reponer, si hay datos de ovillo) -->
         <div v-if="modosDisponibles.length > 1" class="mb-3 flex gap-2">
