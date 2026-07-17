@@ -291,6 +291,22 @@ async function cerrarSesion() {
       Cerrar sesión
     </button>
 
-    <p class="mt-6 text-center text-xs text-texto2/50">nuditos web v1.0 · © 2026 nuditos</p>
+    <!-- Legales -->
+    <div class="mt-8 text-center text-xs text-texto2/70">
+      <div class="flex flex-wrap justify-center gap-x-3 gap-y-1">
+        <NuxtLink to="/terminos" class="underline-offset-2 hover:text-rosa hover:underline">
+          Términos y Condiciones
+        </NuxtLink>
+        <span class="text-borde">·</span>
+        <NuxtLink to="/privacidad" class="underline-offset-2 hover:text-rosa hover:underline">
+          Privacidad
+        </NuxtLink>
+        <span class="text-borde">·</span>
+        <NuxtLink to="/reembolsos" class="underline-offset-2 hover:text-rosa hover:underline">
+          Reembolsos
+        </NuxtLink>
+      </div>
+      <p class="mt-3 text-texto2/50">nuditos web v1.0 · © 2026 nuditos</p>
+    </div>
   </main>
 </template>

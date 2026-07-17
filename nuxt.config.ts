@@ -7,8 +7,12 @@ export default defineNuxtConfig({
   supabase: {
     // Sin tipos generados por ahora; se pueden generar luego con `supabase gen types`.
     types: false,
-    // Defaults del módulo: redirige a /login si no hay sesión y usa /confirm
-    // como callback de OAuth.
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      // Páginas legales: accesibles sin sesión (se enlazan desde el login).
+      exclude: ['/terminos', '/privacidad', '/reembolsos'],
+    },
   },
   app: {
     head: {
