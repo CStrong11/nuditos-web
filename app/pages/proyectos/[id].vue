@@ -3,15 +3,21 @@ const route = useRoute()
 const supabase = useSupabaseClient()
 const proyectoID = route.params.id as string
 
-const tab = ref<'movimientos' | 'porHilo'>('movimientos')
+const tab = ref<'movimientos' | 'porHilo' | 'insumos'>('movimientos')
 
 const { data, status, refresh } = await useAsyncData(`proyecto-${proyectoID}`, async () => {
-  const [proyectoRes, consumoRes, gastosRes] = await Promise.all([
+  const [proyectoRes, consumoRes, gastosRes, gastosInsumoRes] = await Promise.all([
     supabase.from('proyectos').select('*').eq('id', proyectoID).single(),
     supabase.from('consumo_por_proyecto').select('*').eq('proyecto_id', proyectoID).maybeSingle(),
     supabase
       .from('movimientos_hilo')
       .select(GASTO_SELECT)
+      .eq('proyecto_id', proyectoID)
+      .eq('tipo', 'uso')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('movimientos_insumo')
+      .select(GASTO_INSUMO_SELECT)
       .eq('proyecto_id', proyectoID)
       .eq('tipo', 'uso')
       .order('created_at', { ascending: false }),
@@ -21,16 +27,26 @@ const { data, status, refresh } = await useAsyncData(`proyecto-${proyectoID}`, a
     proyecto: proyectoRes.data as any,
     consumo: consumoRes.data as any,
     gastos: (gastosRes.data ?? []) as unknown as GastoMovimiento[],
+    gastosInsumo: (gastosInsumoRes.data ?? []) as unknown as GastoInsumo[],
   }
 })
 
 const proyecto = computed(() => data.value?.proyecto)
 const gastos = computed(() => data.value?.gastos ?? [])
+const gastosInsumo = computed(() => data.value?.gastosInsumo ?? [])
 
-const gastoTotal = computed(() =>
+const gastoHilos = computed(() =>
   gastos.value.reduce((sum, m) => sum + (costoEstimado(m) ?? 0), 0),
 )
-const haySinCosto = computed(() => gastos.value.some(m => costoEstimado(m) == null))
+const gastoInsumos = computed(() =>
+  gastosInsumo.value.reduce((sum, m) => sum + (costoEstimadoInsumo(m) ?? 0), 0),
+)
+const gastoTotal = computed(() => gastoHilos.value + gastoInsumos.value)
+
+const haySinCosto = computed(() =>
+  gastos.value.some(m => costoEstimado(m) == null)
+  || gastosInsumo.value.some(m => costoEstimadoInsumo(m) == null),
+)
 
 interface ResumenHiloGasto {
   id: string
@@ -164,16 +180,19 @@ async function eliminar() {
       </section>
 
       <!-- Gasto -->
-      <section v-if="gastos.length" class="mt-4 rounded-2xl border border-borde bg-blanco p-5 text-center">
+      <section v-if="gastos.length || gastosInsumo.length" class="mt-4 rounded-2xl border border-borde bg-blanco p-5 text-center">
         <h3 class="font-bold">Gasto total estimado</h3>
         <p class="mt-1 text-3xl font-bold text-verde-text">{{ dinero(gastoTotal) }}</p>
+        <p v-if="gastoHilos > 0 && gastoInsumos > 0" class="mt-1 text-xs text-texto2">
+          Hilos {{ dinero(gastoHilos) }} · Insumos {{ dinero(gastoInsumos) }}
+        </p>
         <p v-if="haySinCosto" class="mt-1 text-xs text-texto2">
-          No incluye usos de hilos sin costo u ovillo definidos
+          No incluye usos sin costo definido
         </p>
       </section>
 
       <!-- Detalle de gastos -->
-      <section v-if="gastos.length" class="mt-6">
+      <section v-if="gastos.length || gastosInsumo.length" class="mt-6">
         <h3 class="mb-3 font-bold">Detalle de gastos</h3>
 
         <div class="mb-4 flex rounded-xl border border-borde bg-blanco p-1">
@@ -191,7 +210,49 @@ async function eliminar() {
           >
             Por hilo
           </button>
+          <button
+            v-if="gastosInsumo.length"
+            class="flex-1 rounded-lg py-2 text-sm font-medium"
+            :class="tab === 'insumos' ? 'bg-rosa-pastel text-rosa' : 'text-texto2'"
+            @click="tab = 'insumos'"
+          >
+            Insumos
+          </button>
         </div>
+
+        <!-- Insumos usados -->
+        <ul v-if="tab === 'insumos'" class="space-y-2">
+          <li
+            v-for="mov in gastosInsumo" :key="mov.id"
+            class="flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-3"
+          >
+            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-celeste text-sm">🧷</span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium">{{ mov.insumo?.nombre ?? 'Insumo' }}</p>
+              <p class="text-xs text-texto2">
+                <template v-if="mov.insumo?.tipo_uso === 'par'">
+                  {{ formatoNum(Math.abs(mov.cantidad) / 2) }}
+                  {{ Math.abs(mov.cantidad) / 2 === 1 ? 'par' : 'pares' }}
+                  ({{ formatoNum(Math.abs(mov.cantidad)) }} u.)
+                </template>
+                <template v-else>
+                  {{ formatoNum(Math.abs(mov.cantidad)) }}
+                  {{ Math.abs(mov.cantidad) === 1 ? 'unidad' : 'unidades' }}
+                </template>
+              </p>
+              <p v-if="mov.nota" class="text-xs text-texto2/70">{{ mov.nota }}</p>
+            </div>
+            <div class="shrink-0 text-right">
+              <p v-if="costoEstimadoInsumo(mov) != null" class="text-sm font-bold text-verde-text">
+                {{ dinero(costoEstimadoInsumo(mov)!) }}
+              </p>
+              <p v-else class="text-xs text-texto2/60">sin costo</p>
+              <time class="text-xs text-texto2/60">
+                {{ new Date(mov.created_at).toLocaleDateString('es-CL') }}
+              </time>
+            </div>
+          </li>
+        </ul>
 
         <!-- Por movimiento -->
         <ul v-if="tab === 'movimientos'" class="space-y-2">

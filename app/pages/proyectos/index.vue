@@ -11,16 +11,24 @@ const filtros = [
 ]
 
 const { data, status, refresh } = await useAsyncData('proyectos', async () => {
-  const [proyectosRes, consumoRes, gastosRes] = await Promise.all([
+  const [proyectosRes, consumoRes, gastosRes, gastosInsumoRes] = await Promise.all([
     supabase.from('proyectos').select('*').order('nombre'),
     supabase.from('consumo_por_proyecto').select('*'),
     supabase.from('movimientos_hilo').select(GASTO_SELECT).eq('tipo', 'uso').not('proyecto_id', 'is', null),
+    supabase.from('movimientos_insumo').select(GASTO_INSUMO_SELECT).eq('tipo', 'uso').not('proyecto_id', 'is', null),
   ])
   if (proyectosRes.error) throw proyectosRes.error
 
   const gastoPorProyecto: Record<string, number> = {}
   for (const mov of (gastosRes.data ?? []) as unknown as GastoMovimiento[]) {
     const costo = costoEstimado(mov)
+    if (costo != null && mov.proyecto_id) {
+      gastoPorProyecto[mov.proyecto_id] = (gastoPorProyecto[mov.proyecto_id] ?? 0) + costo
+    }
+  }
+  // Los insumos suman al mismo gasto del proyecto
+  for (const mov of (gastosInsumoRes.data ?? []) as unknown as GastoInsumo[]) {
+    const costo = costoEstimadoInsumo(mov)
     if (costo != null && mov.proyecto_id) {
       gastoPorProyecto[mov.proyecto_id] = (gastoPorProyecto[mov.proyecto_id] ?? 0) + costo
     }

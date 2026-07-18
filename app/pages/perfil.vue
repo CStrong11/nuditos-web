@@ -284,6 +284,23 @@ async function cerrarSesion() {
       </div>
     </section>
 
+    <!-- Ayuda -->
+    <NuxtLink
+      to="/ayuda"
+      class="mt-4 flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-4 transition hover:border-rosa"
+    >
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rosa-pastel text-lg">
+        💬
+      </span>
+      <span class="min-w-0 flex-1">
+        <span class="block font-semibold">Ayuda y tutoriales</span>
+        <span class="block text-xs text-texto2">
+          Cómo usar la app, preguntas frecuentes y soporte
+        </span>
+      </span>
+      <span class="shrink-0 text-texto2">›</span>
+    </NuxtLink>
+
     <button
       class="mt-6 w-full rounded-2xl bg-poco-bg py-3 font-semibold text-poco-text"
       @click="cerrarSesion"

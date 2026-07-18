@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const supabase = useSupabaseClient()
 
-const tab = ref<'general' | 'porHilo'>('general')
+const tab = ref<'general' | 'porHilo' | 'insumos'>('general')
 
 interface HiloResumen {
   id: string
@@ -13,11 +13,13 @@ interface HiloResumen {
 }
 
 const { data, status } = await useAsyncData('resumen-stats', async () => {
-  const [mensualRes, porProyectoRes, resumenRes, hilosRes] = await Promise.all([
+  const [mensualRes, porProyectoRes, resumenRes, hilosRes, insumosRes, movInsumoRes] = await Promise.all([
     supabase.from('consumo_mensual').select('*').order('mes', { ascending: false }),
     supabase.from('consumo_por_proyecto').select('*').order('consumo_total', { ascending: false }),
     supabase.from('resumen_hilos').select('id, stock_bajo, consumo_total'),
     supabase.from('hilos').select('id, nombre, unidad, cantidad_actual, peso_por_ovillo, metros_por_ovillo').order('nombre'),
+    supabase.from('insumos').select('*').order('nombre'),
+    supabase.from('movimientos_insumo').select('insumo_id, cantidad, tipo').eq('tipo', 'uso'),
   ])
   const resumen = (resumenRes.data ?? []) as any[]
   const hilos = (hilosRes.data ?? []) as any[]
@@ -48,6 +50,30 @@ const { data, status } = await useAsyncData('resumen-stats', async () => {
     }
   })
 
+  // --- Insumos: stock y consumo por insumo ---
+  const insumos = (insumosRes.data ?? []) as any[]
+  const movInsumo = (movInsumoRes.data ?? []) as any[]
+  const usadoPorInsumo: Record<string, number> = {}
+  for (const m of movInsumo) {
+    usadoPorInsumo[m.insumo_id] = (usadoPorInsumo[m.insumo_id] ?? 0) + Math.abs(Number(m.cantidad))
+  }
+
+  const porInsumo = insumos.map((i) => {
+    const usado = usadoPorInsumo[i.id] ?? 0
+    const min = Number(i.cantidad_minima)
+    return {
+      id: i.id,
+      nombre: i.nombre,
+      tipoUso: i.tipo_uso,
+      stock: medidasInsumo(Number(i.cantidad_actual), i),
+      consumo: usado > 0 ? medidasInsumo(usado, i) : null,
+      valorUsado: (costoUnitarioInsumo(i) ?? 0) * usado,
+      stockBajo: !!min && Number(i.cantidad_actual) <= min,
+    }
+  })
+
+  const insumosStockBajo = porInsumo.filter(i => i.stockBajo).length
+
   return {
     mensual: (mensualRes.data ?? []) as any[],
     porProyecto: (porProyectoRes.data ?? []) as any[],
@@ -56,6 +82,9 @@ const { data, status } = await useAsyncData('resumen-stats', async () => {
     totalOvillos,
     hilosSinDatoOvillo,
     porHilo,
+    porInsumo,
+    totalInsumos: insumos.length,
+    insumosStockBajo,
   }
 })
 
@@ -100,7 +129,64 @@ function nombreMes(mes: string): string {
         >
           Por hilo
         </button>
+        <button
+          class="flex-1 rounded-lg py-2 text-sm font-medium"
+          :class="tab === 'insumos' ? 'bg-rosa-pastel text-rosa' : 'text-texto2'"
+          @click="tab = 'insumos'"
+        >
+          Insumos
+        </button>
       </div>
+
+      <!-- ===== Pestaña: Insumos ===== -->
+      <template v-if="tab === 'insumos'">
+        <div class="mb-6 grid grid-cols-2 gap-3">
+          <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
+            <p class="text-3xl font-bold text-rosa">{{ data.totalInsumos }}</p>
+            <p class="text-xs text-texto2">insumos distintos</p>
+          </div>
+          <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">
+            <p class="text-3xl font-bold" :class="data.insumosStockBajo ? 'text-poco-text' : 'text-verde-text'">
+              {{ data.insumosStockBajo }}
+            </p>
+            <p class="text-xs text-texto2">con stock bajo</p>
+          </div>
+        </div>
+
+        <p v-if="!data.porInsumo.length" class="py-12 text-center text-texto2">
+          No hay insumos aún
+        </p>
+        <ul v-else class="space-y-3">
+          <li
+            v-for="i in data.porInsumo" :key="i.id"
+            class="rounded-2xl border border-borde bg-blanco p-4"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <NuxtLink :to="`/insumos/${i.id}`" class="truncate font-semibold hover:text-rosa">
+                {{ i.nombre }}
+              </NuxtLink>
+              <span
+                v-if="i.stockBajo"
+                class="shrink-0 rounded-lg bg-poco-bg px-2 py-0.5 text-xs font-semibold text-poco-text"
+              >
+                Stock bajo
+              </span>
+            </div>
+            <div class="mt-2 grid gap-1 text-sm">
+              <p>
+                <span class="text-texto2">En stock:</span>
+                <span class="font-medium"> {{ i.stock.join(' · ') }}</span>
+              </p>
+              <p v-if="i.consumo">
+                <span class="text-texto2">Consumido:</span>
+                <span class="font-medium text-durazno-text"> {{ i.consumo.join(' · ') }}</span>
+                <span v-if="i.valorUsado > 0" class="text-verde-text"> · {{ dinero(i.valorUsado) }}</span>
+              </p>
+              <p v-else class="text-xs text-texto2/60">Sin consumo registrado</p>
+            </div>
+          </li>
+        </ul>
+      </template>
 
       <!-- ===== Pestaña: Por hilo ===== -->
       <template v-if="tab === 'porHilo'">
@@ -140,7 +226,7 @@ function nombreMes(mes: string): string {
       </template>
 
       <!-- ===== Pestaña: General ===== -->
-      <template v-else>
+      <template v-if="tab === 'general'">
       <!-- Totales -->
       <div class="mb-6 grid grid-cols-3 gap-3">
         <div class="rounded-2xl border border-borde bg-blanco p-4 text-center">

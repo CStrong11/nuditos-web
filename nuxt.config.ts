@@ -10,8 +10,8 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      // Páginas legales: accesibles sin sesión (se enlazan desde el login).
-      exclude: ['/terminos', '/privacidad', '/reembolsos'],
+      // Páginas públicas: legales y ayuda (contenido estático, sin datos de usuario).
+      exclude: ['/terminos', '/privacidad', '/reembolsos', '/ayuda'],
     },
   },
   app: {

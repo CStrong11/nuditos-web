@@ -87,6 +87,128 @@ export function costoEstimado(m: GastoMovimiento): number | null {
   return Math.abs(m.cantidad) * porUnidad
 }
 
+// ===================== Insumos =====================
+// El stock se guarda siempre en UNIDADES sueltas.
+//  · tipo_uso 'par'    -> 1 par = 2 unidades
+//  · unidades_por_paquete + costo (del paquete) -> costo por unidad
+
+export interface InsumoBase {
+  tipo_uso: string
+  unidad?: string | null
+  unidades_por_paquete: number | null
+  costo: number | null
+}
+
+export const TIPOS_USO_INSUMO = [
+  { id: 'unidad', label: 'Por unidad', ayuda: 'Etiquetas, cajitas, cierres…' },
+  { id: 'par', label: 'Por pares', ayuda: 'Ojitos: 1 par = 2 unidades' },
+  { id: 'peso', label: 'Por peso', ayuda: 'Relleno, fibra…' },
+  { id: 'longitud', label: 'Por longitud', ayuda: 'Cinta, elástico…' },
+]
+
+export const UNIDADES_PESO = ['g', 'kg']
+export const UNIDADES_LONGITUD = ['m', 'cm']
+
+/// Unidades de medida disponibles según el tipo de uso.
+export function unidadesDeTipo(tipoUso: string): string[] {
+  if (tipoUso === 'peso') return UNIDADES_PESO
+  if (tipoUso === 'longitud') return UNIDADES_LONGITUD
+  return []
+}
+
+export function unidadPorDefecto(tipoUso: string): string | null {
+  if (tipoUso === 'peso') return 'g'
+  if (tipoUso === 'longitud') return 'm'
+  return null
+}
+
+/// Cuántas unidades de la medida base representa 1 "pieza" que ingresa
+/// el usuario. Solo los pares agrupan (1 par = 2 unidades).
+export function unidadesPorPieza(tipoUso: string): number {
+  return tipoUso === 'par' ? 2 : 1
+}
+
+/// Etiqueta de lo que el usuario escribe (par/unidad/g/m…).
+export function etiquetaPieza(tipoUso: string, cantidad = 2, unidad?: string | null): string {
+  if (tipoUso === 'par') return cantidad === 1 ? 'par' : 'pares'
+  if (tipoUso === 'peso') return unidad || 'g'
+  if (tipoUso === 'longitud') return unidad || 'm'
+  return cantidad === 1 ? 'unidad' : 'unidades'
+}
+
+/// Etiqueta de la medida en la que se guarda el stock.
+export function etiquetaBase(i: InsumoBase, cantidad = 2): string {
+  if (i.tipo_uso === 'peso') return i.unidad || 'g'
+  if (i.tipo_uso === 'longitud') return i.unidad || 'm'
+  return cantidad === 1 ? 'unidad' : 'unidades'
+}
+
+/// ¿El insumo se cuenta en piezas (unidad/par) o se mide (peso/longitud)?
+export function esMedible(tipoUso: string): boolean {
+  return tipoUso === 'peso' || tipoUso === 'longitud'
+}
+
+/// Costo de UNA unidad suelta del insumo (costo del paquete prorrateado).
+export function costoUnitarioInsumo(i: InsumoBase): number | null {
+  if (i.costo == null) return null
+  const porPaquete = Number(i.unidades_por_paquete)
+  if (!porPaquete || Number.isNaN(porPaquete)) return null
+  return i.costo / porPaquete
+}
+
+/// Expresa una cantidad (en la medida base) en todas las formas legibles:
+/// unidades/pares para piezas, o g/m para medibles, más paquetes.
+export function medidasInsumo(cantidadBase: number, i: InsumoBase): string[] {
+  const partes: string[] = []
+
+  if (esMedible(i.tipo_uso)) {
+    partes.push(`${formatoNum(cantidadBase)} ${etiquetaBase(i)}`)
+  } else {
+    partes.push(`${formatoNum(cantidadBase)} ${cantidadBase === 1 ? 'unidad' : 'unidades'}`)
+    if (i.tipo_uso === 'par') {
+      const pares = cantidadBase / 2
+      partes.push(`${formatoNum(pares)} ${pares === 1 ? 'par' : 'pares'}`)
+    }
+  }
+  const porPaquete = Number(i.unidades_por_paquete)
+  if (porPaquete > 0) {
+    const paq = cantidadBase / porPaquete
+    partes.push(`${formatoNum(paq)} ${paq === 1 ? 'paquete' : 'paquetes'}`)
+  }
+  return partes
+}
+
+export function formatoNum(n: number): string {
+  const r = Math.round(n * 100) / 100
+  return Number.isInteger(r) ? String(r) : String(r)
+}
+
+export interface GastoInsumo {
+  id: string
+  insumo_id: string
+  proyecto_id: string | null
+  cantidad: number
+  tipo: string
+  nota: string | null
+  created_at: string
+  insumo: {
+    nombre: string
+    tipo_uso: string
+    costo: number | null
+    unidades_por_paquete: number | null
+  } | null
+}
+
+export const GASTO_INSUMO_SELECT =
+  'id, insumo_id, proyecto_id, cantidad, tipo, nota, created_at, insumo:insumo_id(nombre, tipo_uso, costo, unidades_por_paquete)'
+
+export function costoEstimadoInsumo(m: GastoInsumo): number | null {
+  if (!m.insumo) return null
+  const porUnidad = costoUnitarioInsumo(m.insumo)
+  if (porUnidad == null) return null
+  return Math.abs(m.cantidad) * porUnidad
+}
+
 /// Sube una imagen a un bucket en {uid}/{nombre}.jpg y devuelve la URL
 /// pública con cache-bust (misma convención que la app iOS).
 export async function subirImagen(
