@@ -123,10 +123,16 @@ async function guardar() {
       }
     }
 
+    // La foto es opcional: si falla, no se pierde el insumo ya guardado
+    // (si no, reintentar crearía duplicados).
     if (archivoFoto.value) {
-      const url = await subirImagen(supabase, 'insumos', uid, insumoID, archivoFoto.value)
-      const { error: e2 } = await supabase.from('insumos').update({ imagen_url: url }).eq('id', insumoID)
-      if (e2) throw e2
+      try {
+        const url = await subirImagen(supabase, 'insumos', uid, insumoID, archivoFoto.value)
+        const { error: e2 } = await supabase.from('insumos').update({ imagen_url: url }).eq('id', insumoID)
+        if (e2) throw e2
+      } catch (fotoErr: any) {
+        console.warn('No se pudo subir la foto del insumo:', fotoErr)
+      }
     }
 
     await refreshNuxtData('insumos')
