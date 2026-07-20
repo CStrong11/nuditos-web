@@ -148,12 +148,14 @@ export function esMedible(tipoUso: string): boolean {
   return tipoUso === 'peso' || tipoUso === 'longitud'
 }
 
-/// Costo de UNA unidad suelta del insumo (costo del paquete prorrateado).
+/// Costo de UNA unidad base del insumo.
+/// - Con paquete definido: precio del paquete ÷ cuánto trae.
+/// - Sin paquete: `costo` ya es el precio por unidad.
 export function costoUnitarioInsumo(i: InsumoBase): number | null {
   if (i.costo == null) return null
   const porPaquete = Number(i.unidades_por_paquete)
-  if (!porPaquete || Number.isNaN(porPaquete)) return null
-  return i.costo / porPaquete
+  if (porPaquete > 0) return i.costo / porPaquete
+  return i.costo
 }
 
 /// Expresa una cantidad (en la medida base) en todas las formas legibles:

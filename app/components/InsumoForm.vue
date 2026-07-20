@@ -43,6 +43,24 @@ watch(() => form.tipo_uso, (t) => {
 const unidadesDisponibles = computed(() => unidadesDeTipo(form.tipo_uso))
 const medible = computed(() => esMedible(form.tipo_uso))
 
+// --- Precio: por paquete o por unidad ---
+// Al editar, deducir el modo de los datos guardados.
+const precioModo = ref<'paquete' | 'unidad'>(
+  Number(props.insumo?.unidades_por_paquete) > 0
+    ? 'paquete'
+    : (props.insumo?.costo != null ? 'unidad' : 'paquete'),
+)
+// En modo "por unidad" no hay paquete: se limpia para que no aparezca en los
+// selectores de cantidad ni afecte el costo.
+watch(precioModo, (m) => { if (m === 'unidad') form.unidades_por_paquete = null })
+
+/// Etiqueta de la unidad base para el precio unitario.
+const etiquetaUnidadPrecio = computed(() => {
+  if (form.tipo_uso === 'peso') return form.unidad || 'g'
+  if (form.tipo_uso === 'longitud') return form.unidad || 'm'
+  return 'unidad'
+})
+
 // --- Cantidad inicial: en piezas o en paquetes ---
 const modoCantidad = ref<'pieza' | 'paquete'>('pieza')
 const factorPieza = computed(() => unidadesPorPieza(form.tipo_uso))
@@ -77,10 +95,12 @@ const minimoMostrado = computed<number | null>({
   },
 })
 
-const costoUnitario = computed(() => {
-  if (form.costo == null || porPaquete.value <= 0) return null
-  return Number(form.costo) / porPaquete.value
-})
+const costoUnitario = computed(() => costoUnitarioInsumo({
+  tipo_uso: form.tipo_uso,
+  unidad: form.unidad,
+  unidades_por_paquete: precioModo.value === 'paquete' ? form.unidades_por_paquete : null,
+  costo: form.costo,
+}))
 
 async function guardar() {
   error.value = null
@@ -95,7 +115,8 @@ async function guardar() {
       tipo_uso: form.tipo_uso,
       unidad: medible.value ? (form.unidad || unidadPorDefecto(form.tipo_uso)) : null,
       cantidad_minima: form.cantidad_minima || null,
-      unidades_por_paquete: form.unidades_por_paquete || null,
+      // En modo "por unidad" no se guarda paquete; el costo es el precio unitario.
+      unidades_por_paquete: precioModo.value === 'paquete' ? (form.unidades_por_paquete || null) : null,
       costo: form.costo || null,
     }
 
@@ -159,8 +180,8 @@ async function guardar() {
 
     <div class="grid gap-3 sm:grid-cols-2">
       <input v-model="form.nombre" placeholder="Nombre (ej. Ojitos de seguridad 12mm)" class="campo sm:col-span-2">
-      <input v-model="form.marca" placeholder="Marca" class="campo">
-      <input v-model="form.color" placeholder="Color" class="campo">
+      <input v-model="form.marca" placeholder="Marca (opcional)" class="campo">
+      <input v-model="form.color" placeholder="Color (opcional)" class="campo">
     </div>
 
     <!-- Tipo de uso -->
@@ -198,13 +219,36 @@ async function guardar() {
       </div>
     </div>
 
-    <!-- Paquete y precio -->
+    <!-- Precio (opcional) -->
     <div class="rounded-2xl border border-borde bg-blanco p-4">
-      <p class="mb-1 font-semibold">Paquete y precio</p>
+      <p class="mb-1 font-semibold">Precio <span class="text-xs font-normal text-texto2">(opcional)</span></p>
       <p class="mb-3 text-xs text-texto2">
         Para calcular cuánto aporta este insumo al costo de tus proyectos.
+        Si no sabes el precio del paquete, ponlo por unidad.
       </p>
-      <div class="grid gap-3 sm:grid-cols-2">
+
+      <!-- Toggle: por paquete / por unidad -->
+      <div class="mb-3 flex gap-2">
+        <button
+          type="button"
+          class="flex-1 rounded-xl border py-2 text-sm font-medium"
+          :class="precioModo === 'paquete' ? 'border-rosa bg-rosa-pastel text-rosa' : 'border-borde text-texto2'"
+          @click="precioModo = 'paquete'"
+        >
+          Precio por paquete
+        </button>
+        <button
+          type="button"
+          class="flex-1 rounded-xl border py-2 text-sm font-medium"
+          :class="precioModo === 'unidad' ? 'border-rosa bg-rosa-pastel text-rosa' : 'border-borde text-texto2'"
+          @click="precioModo = 'unidad'"
+        >
+          Precio por {{ etiquetaUnidadPrecio }}
+        </button>
+      </div>
+
+      <!-- Modo paquete: cuánto trae + precio del paquete -->
+      <div v-if="precioModo === 'paquete'" class="grid gap-3 sm:grid-cols-2">
         <label class="text-sm text-texto2">
           {{ medible ? `Cuánto trae un paquete (${form.unidad || ''})` : 'Unidades por paquete' }}
           <input
@@ -223,6 +267,20 @@ async function guardar() {
           >
         </label>
       </div>
+
+      <!-- Modo unidad: solo el precio unitario -->
+      <label v-else class="block text-sm text-texto2">
+        Precio por {{ etiquetaUnidadPrecio }}
+        <input
+          v-model.number="form.costo"
+          type="number" min="0" step="any" placeholder="ej. 90"
+          class="campo mt-1"
+        >
+        <span v-if="form.tipo_uso === 'par'" class="mt-1 block text-xs text-texto2/70">
+          Es el precio de una sola unidad; el par cuesta el doble.
+        </span>
+      </label>
+
       <p v-if="costoUnitario != null" class="mt-2 text-xs text-texto2">
         Costo por {{ medible ? (form.unidad || '') : 'unidad' }}:
         <strong>{{ dinero(costoUnitario) }}</strong>
@@ -311,7 +369,7 @@ async function guardar() {
     </div>
 
     <label class="block text-sm text-texto2">
-      Descripción
+      Descripción <span class="text-xs">(opcional)</span>
       <textarea v-model="form.descripcion" rows="2" class="campo mt-1" />
     </label>
 

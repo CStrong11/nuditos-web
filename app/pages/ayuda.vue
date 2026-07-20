@@ -92,9 +92,10 @@ const secciones = [
           <!-- Insumos -->
           <template v-else-if="s.id === 'insumos'">
             <p>Los <strong>insumos</strong> son todo lo que no es hilo pero también usas: ojitos de seguridad, rellenos, etiquetas, cajitas, cintas, cierres…</p>
+            <p>Al crear uno, solo el <strong>nombre</strong> es obligatorio. La marca, el color, la foto, el precio y la descripción son <strong>opcionales</strong>: puedes llenarlos cuando quieras.</p>
 
             <h3>Las 4 formas de medir</h3>
-            <p>Al crear un insumo eliges cómo llevar su inventario:</p>
+            <p>Eliges cómo llevar su inventario:</p>
             <ul>
               <li><strong>Por unidad</strong> — etiquetas, cajitas, cierres.</li>
               <li><strong>Por pares</strong> — ojitos de seguridad. Cada par que uses descuenta 2 unidades del inventario.</li>
@@ -102,11 +103,16 @@ const secciones = [
               <li><strong>Por longitud</strong> — cintas y elásticos. Eliges metros o centímetros.</li>
             </ul>
 
-            <h3>Paquete y precio</h3>
-            <p>Indica <strong>cuánto trae un paquete</strong> y <strong>cuánto costó</strong>. Con eso la app calcula el costo de cada uso.</p>
+            <h3>Precio: por paquete o por unidad</h3>
+            <p>Para que el insumo sume al costo de tus proyectos, puedes indicar su precio de dos maneras:</p>
+            <ul>
+              <li><strong>Por paquete</strong> — dices cuánto trae un paquete y cuánto costó; la app calcula el precio de cada unidad.</li>
+              <li><strong>Por unidad</strong> — si no sabes el precio del paquete, escribes directamente cuánto vale una unidad.</li>
+            </ul>
             <div class="tip">
-              <strong>Ejemplo:</strong> una bolsa de relleno de <strong>500 g</strong> que costó <strong>$20.000</strong>. Si usas 50 g en un proyecto, se le suman <strong>$2.000</strong> automáticamente.
+              <strong>Ejemplo (por paquete):</strong> una bolsa de relleno de <strong>500 g</strong> que costó <strong>$20.000</strong>. Si usas 50 g en un proyecto, se le suman <strong>$2.000</strong> automáticamente.
             </div>
+            <p class="nota">El precio es opcional. Si lo dejas vacío, el insumo funciona igual, pero sus usos no sumarán al gasto del proyecto.</p>
 
             <h3>Usar y reponer</h3>
             <p>Igual que con los hilos: puedes registrar la cantidad en <strong>pares, unidades o paquetes</strong> (o en gramos/metros según el tipo) y asignarla a un proyecto.</p>
@@ -173,7 +179,7 @@ const secciones = [
             <p>Es porque ese hilo o insumo no tiene un <strong>«Stock mínimo»</strong> definido. Edítalo y ponle el número desde el cual quieres que te avise.</p>
 
             <h3>Mi proyecto dice $0 o «sin costo»</h3>
-            <p>Falta información de precio. Revisa que el hilo tenga <strong>costo + peso/metros por ovillo</strong>, y que el insumo tenga <strong>precio + cuánto trae el paquete</strong>.</p>
+            <p>Falta información de precio. Revisa que el hilo tenga <strong>costo + peso/metros por ovillo</strong>. En el insumo basta con ponerle un <strong>precio</strong>: por paquete (con cuánto trae) o directamente por unidad.</p>
 
             <h3>¿Puedo usarla en el computador y el teléfono?</h3>
             <p>Sí. Tu información se guarda en la nube, así que entras con la misma cuenta desde donde quieras y ves lo mismo.</p>

@@ -259,7 +259,7 @@ function detalleMovimiento(mov: any): string {
           <div v-if="insumo.unidades_por_paquete" class="celda">
             <span>Por paquete</span>{{ formatoNum(Number(insumo.unidades_por_paquete)) }} {{ etiquetaBase(insumo) }}
           </div>
-          <div v-if="insumo.costo" class="celda">
+          <div v-if="insumo.costo && porPaquete > 0" class="celda">
             <span>Precio del paquete</span>{{ dinero(Number(insumo.costo)) }}
           </div>
           <div v-if="costoUnitario != null" class="celda">
