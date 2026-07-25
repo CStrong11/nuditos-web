@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
   const dataId = payload?.data?.id
   const db = supabaseAdmin()
 
-  // Resuelve el user_id: primero por custom_data, luego por la suscripción guardada.
-  async function resolverUsuario(subscriptionId?: string | null): Promise<string | null> {
+  // Resuelve el user_id en cascada: custom_data -> suscripción guardada -> email.
+  async function resolverUsuario(subscriptionId?: string | null, email?: string | null): Promise<string | null> {
     if (custom?.user_id) return custom.user_id as string
     if (subscriptionId) {
       const { data } = await db
@@ -30,13 +30,17 @@ export default defineEventHandler(async (event) => {
         .maybeSingle()
       if (data?.user_id) return data.user_id
     }
+    if (email) {
+      const { data } = await db.rpc('user_id_por_email', { p_email: email })
+      if (data) return data as string
+    }
     return null
   }
 
   // ---- Eventos de suscripción ----
   if (eventName.startsWith('subscription_') && !eventName.startsWith('subscription_payment')) {
     const subscriptionId = String(dataId)
-    const userId = await resolverUsuario(subscriptionId)
+    const userId = await resolverUsuario(subscriptionId, attrs.user_email)
     if (!userId) return { ok: true, nota: 'usuario no resuelto' }
 
     const status: string = attrs.status ?? ''
@@ -73,7 +77,7 @@ export default defineEventHandler(async (event) => {
   // ---- Pagos (facturas de suscripción) ----
   if (eventName === 'subscription_payment_success' || eventName === 'subscription_payment_failed') {
     const subscriptionId = attrs.subscription_id ? String(attrs.subscription_id) : null
-    const userId = await resolverUsuario(subscriptionId)
+    const userId = await resolverUsuario(subscriptionId, attrs.user_email)
     if (!userId) return { ok: true, nota: 'usuario no resuelto' }
 
     await db.from('pagos').insert({
