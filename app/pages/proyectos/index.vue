@@ -1,6 +1,12 @@
 <script setup lang="ts">
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const { tieneAcceso } = useSuscripcion()
+
+function nuevoProyecto() {
+  if (!tieneAcceso.value) { navigateTo('/plan'); return }
+  modalCrear.value = true
+}
 
 const filtro = ref<string | null>(null)
 const filtros = [
@@ -94,7 +100,7 @@ async function crearProyecto() {
       </div>
       <button
         class="rounded-xl bg-rosa px-4 py-2 text-sm font-semibold text-white"
-        @click="modalCrear = true"
+        @click="nuevoProyecto"
       >
         + Nuevo
       </button>

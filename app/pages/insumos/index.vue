@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const supabase = useSupabaseClient()
+const { tieneAcceso } = useSuscripcion()
 const busqueda = ref('')
 
 // Al visitar la sección, la novedad deja de anunciarse
@@ -51,7 +52,7 @@ function resumenCantidad(i: any): string {
         <p class="text-sm text-texto2">{{ filtrados.length }} insumos</p>
       </div>
       <NuxtLink
-        to="/insumos/nuevo"
+        :to="tieneAcceso ? '/insumos/nuevo' : '/plan'"
         class="rounded-xl bg-rosa px-4 py-2 text-sm font-semibold text-white"
       >
         + Nuevo insumo

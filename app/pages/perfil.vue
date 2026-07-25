@@ -284,10 +284,27 @@ async function cerrarSesion() {
       </div>
     </section>
 
+    <!-- Mi plan -->
+    <NuxtLink
+      to="/plan"
+      class="mt-4 flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-4 transition hover:border-rosa"
+    >
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rosa-pastel text-lg">
+        💳
+      </span>
+      <span class="min-w-0 flex-1">
+        <span class="block font-semibold">Mi plan</span>
+        <span class="block text-xs text-texto2">
+          Suscripción, pagos y facturación
+        </span>
+      </span>
+      <span class="shrink-0 text-texto2">›</span>
+    </NuxtLink>
+
     <!-- Ayuda -->
     <NuxtLink
       to="/ayuda"
-      class="mt-4 flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-4 transition hover:border-rosa"
+      class="mt-3 flex items-center gap-3 rounded-2xl border border-borde bg-blanco p-4 transition hover:border-rosa"
     >
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rosa-pastel text-lg">
         💬

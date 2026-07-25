@@ -14,6 +14,7 @@ interface ResumenHilo {
 }
 
 const supabase = useSupabaseClient()
+const { tieneAcceso } = useSuscripcion()
 const busqueda = ref('')
 const tagsSeleccionados = ref<Set<string>>(new Set())
 
@@ -96,7 +97,7 @@ function porcentaje(h: ResumenHilo): number {
         </div>
       </div>
       <NuxtLink
-        to="/hilos/nuevo"
+        :to="tieneAcceso ? '/hilos/nuevo' : '/plan'"
         class="rounded-xl bg-rosa px-4 py-2 text-sm font-semibold text-white"
       >
         + Nuevo hilo

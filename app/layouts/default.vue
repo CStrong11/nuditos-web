@@ -10,8 +10,12 @@ const tabs = [
 const route = useRoute()
 const user = useSupabaseUser()
 const { vista, comprobar } = useNovedadInsumos()
+const { cargar: cargarSuscripcion } = useSuscripcion()
 
-onMounted(comprobar)
+onMounted(() => {
+  comprobar()
+  cargarSuscripcion()
+})
 
 function activa(to: string): boolean {
   if (to === '/') return route.path === '/' || route.path.startsWith('/hilos')
@@ -21,12 +25,15 @@ function activa(to: string): boolean {
 
 <template>
   <div class="pb-24">
+    <!-- Aviso de trial / modo solo lectura -->
+    <AccesoBanner v-if="user" class="pt-3" />
+
     <slot />
 
     <!-- Aviso flotante de novedad (solo con sesión iniciada) -->
     <NovedadToast v-if="user" />
 
-    <nav class="fixed inset-x-0 bottom-0 z-50 border-t border-borde bg-blanco/90 backdrop-blur">
+    <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-blanco/90 backdrop-blur">
       <div class="mx-auto flex max-w-3xl justify-around">
         <NuxtLink
           v-for="tab in tabs"

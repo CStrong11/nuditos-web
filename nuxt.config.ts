@@ -4,14 +4,26 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/supabase', '@nuxtjs/tailwindcss', '@vite-pwa/nuxt'],
   css: ['~/assets/css/tema.css'],
+  // Secretos solo del servidor. Se leen de las variables de entorno de Vercel
+  // (sin prefijo NUXT_), capturadas en el build.
+  runtimeConfig: {
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    lemonsqueezyApiKey: process.env.LEMONSQUEEZY_API_KEY || '',
+    lemonsqueezyWebhookSecret: process.env.LEMONSQUEEZY_WEBHOOK_SECRET || '',
+    lemonsqueezyStoreId: process.env.LEMONSQUEEZY_STORE_ID || '',
+    lemonsqueezyVariantMensual: process.env.LEMONSQUEEZY_VARIANT_MENSUAL || '',
+    lemonsqueezyVariantTrimestral: process.env.LEMONSQUEEZY_VARIANT_TRIMESTRAL || '',
+    lemonsqueezyVariantSemestral: process.env.LEMONSQUEEZY_VARIANT_SEMESTRAL || '',
+    lemonsqueezyVariantAnual: process.env.LEMONSQUEEZY_VARIANT_ANUAL || '',
+  },
   supabase: {
     // Sin tipos generados por ahora; se pueden generar luego con `supabase gen types`.
     types: false,
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      // Páginas públicas: legales y ayuda (contenido estático, sin datos de usuario).
-      exclude: ['/terminos', '/privacidad', '/reembolsos', '/ayuda'],
+      // Públicas: legales, ayuda, y las rutas de API (que validan su propia auth).
+      exclude: ['/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**'],
     },
   },
   app: {
