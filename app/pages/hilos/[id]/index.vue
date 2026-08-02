@@ -143,13 +143,22 @@ async function confirmarModal() {
       })
       if (e) throw e
 
-      // Tiempo dedicado al proyecto (opcional)
+      // Tiempo dedicado al proyecto (opcional), ligado al movimiento recién creado
       if (proyectoID.value && tiempoMinutos.value > 0) {
+        const { data: movNuevo } = await supabase
+          .from('movimientos_hilo')
+          .select('id')
+          .eq('hilo_id', hiloID)
+          .eq('tipo', 'uso')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
         const { error: te } = await supabase.from('tiempos_proyecto').insert({
           user_id: userID(user.value),
           proyecto_id: proyectoID.value,
           minutos: tiempoMinutos.value,
           nota: nota.value || null,
+          movimiento_id: (movNuevo as any)?.id ?? null,
         })
         if (te) throw te
       }
@@ -192,6 +201,69 @@ async function eliminar() {
 
 const tipoLabel: Record<string, string> = {
   uso: 'Uso', reposicion: 'Reposición', ajuste: 'Ajuste', inicial: 'Inicial',
+}
+
+// ¿El movimiento es editable/eliminable? Solo uso y reposición.
+function editable(mov: any): boolean {
+  return mov.tipo === 'uso' || mov.tipo === 'reposicion'
+}
+
+// --- Editar movimiento ---
+const movEdit = ref<any | null>(null)
+const editCantidad = ref(0)
+const editProyecto = ref('')
+const editNota = ref('')
+const editProcesando = ref(false)
+const editError = ref<string | null>(null)
+
+function abrirEditarMov(mov: any) {
+  movEdit.value = mov
+  editCantidad.value = Math.abs(Number(mov.cantidad))
+  editProyecto.value = mov.proyecto_id ?? ''
+  editNota.value = mov.nota ?? ''
+  editError.value = null
+}
+
+async function guardarEdicionMov() {
+  editError.value = null
+  editProcesando.value = true
+  try {
+    const { error: e } = await supabase.rpc('editar_movimiento_hilo', {
+      p_id: movEdit.value.id,
+      p_cantidad: String(editCantidad.value),
+      p_proyecto_id: movEdit.value.tipo === 'uso' ? (editProyecto.value || null) : null,
+      p_nota: editNota.value || '',
+    })
+    if (e) throw e
+    movEdit.value = null
+    await refresh()
+    await refreshNuxtData('resumen_hilos')
+  } catch (e: any) {
+    editError.value = e.message ?? 'No se pudo guardar'
+  } finally {
+    editProcesando.value = false
+  }
+}
+
+// --- Eliminar movimiento ---
+const movDelete = ref<any | null>(null)
+const eliminandoMov = ref(false)
+const errorEliminarMov = ref<string | null>(null)
+
+async function confirmarEliminarMov() {
+  errorEliminarMov.value = null
+  eliminandoMov.value = true
+  try {
+    const { error: e } = await supabase.rpc('eliminar_movimiento_hilo', { p_id: movDelete.value.id })
+    if (e) throw e
+    movDelete.value = null
+    await refresh()
+    await refreshNuxtData('resumen_hilos')
+  } catch (e: any) {
+    errorEliminarMov.value = e.message ?? 'No se pudo eliminar'
+  } finally {
+    eliminandoMov.value = false
+  }
 }
 </script>
 
@@ -329,9 +401,27 @@ const tipoLabel: Record<string, string> = {
               <p v-if="mov.proyecto?.nombre" class="text-xs text-texto2">{{ mov.proyecto.nombre }}</p>
               <p v-if="mov.nota" class="text-xs text-texto2/70">{{ mov.nota }}</p>
             </div>
-            <time class="shrink-0 text-xs text-texto2/60">
-              {{ new Date(mov.created_at).toLocaleDateString('es-CL') }}
-            </time>
+            <div class="flex shrink-0 flex-col items-end gap-1.5">
+              <time class="text-xs text-texto2/60">
+                {{ new Date(mov.created_at).toLocaleDateString('es-CL') }}
+              </time>
+              <div v-if="editable(mov)" class="flex gap-1">
+                <button
+                  class="flex h-7 w-7 items-center justify-center rounded-lg border border-borde bg-blanco text-xs"
+                  aria-label="Editar movimiento"
+                  @click="abrirEditarMov(mov)"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="flex h-7 w-7 items-center justify-center rounded-lg bg-poco-bg text-xs"
+                  aria-label="Eliminar movimiento"
+                  @click="errorEliminarMov = null; movDelete = mov"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
           </li>
         </ul>
       </section>
@@ -451,6 +541,73 @@ const tipoLabel: Record<string, string> = {
         </div>
       </div>
     </div>
+
+    <!-- Modal editar movimiento -->
+    <div
+      v-if="movEdit"
+      class="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:items-center"
+      @click.self="movEdit = null"
+    >
+      <div class="w-full max-w-md rounded-t-3xl bg-crema p-6 sm:rounded-3xl">
+        <h3 class="mb-4 text-center text-lg font-bold">
+          Editar {{ movEdit.tipo === 'uso' ? 'uso' : 'reposición' }}
+        </h3>
+
+        <label class="mb-3 block text-sm text-texto2">
+          Cantidad ({{ hilo?.unidad }})
+          <input
+            v-model.number="editCantidad"
+            type="number" min="0" step="any"
+            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
+          >
+        </label>
+
+        <label v-if="movEdit.tipo === 'uso' && proyectos?.length" class="mb-3 block text-sm text-texto2">
+          Proyecto
+          <select
+            v-model="editProyecto"
+            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
+          >
+            <option value="">Sin proyecto</option>
+            <option v-for="p in proyectos" :key="p.id" :value="p.id">{{ p.nombre }}</option>
+          </select>
+        </label>
+
+        <label class="mb-4 block text-sm text-texto2">
+          Nota (opcional)
+          <input
+            v-model="editNota"
+            class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none focus:border-rosa"
+          >
+        </label>
+
+        <p v-if="editError" class="mb-3 rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ editError }}</p>
+
+        <div class="flex gap-3">
+          <button class="flex-1 rounded-2xl border border-borde bg-blanco py-3" @click="movEdit = null">
+            Cancelar
+          </button>
+          <button
+            :disabled="editProcesando || editCantidad <= 0"
+            class="flex-1 rounded-2xl bg-rosa py-3 font-semibold text-white disabled:opacity-40"
+            @click="guardarEdicionMov"
+          >
+            {{ editProcesando ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmación de eliminación de movimiento -->
+    <ConfirmModal
+      :abierto="!!movDelete"
+      titulo="¿Eliminar movimiento?"
+      mensaje="Se ajustará el stock y, si era un uso con tiempo, también se descontará ese tiempo del proyecto."
+      :procesando="eliminandoMov"
+      :error="errorEliminarMov"
+      @confirmar="confirmarEliminarMov"
+      @cancelar="movDelete = null"
+    />
 
     <!-- Confirmación de eliminación -->
     <ConfirmModal
