@@ -2,10 +2,19 @@
 useHead({ title: 'Mi plan — Nuditos' })
 
 const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 const { sub, cargar, esVitalicia, enTrial, diasTrialRestantes, periodoVigente, tieneAcceso } = useSuscripcion()
 
 const cargandoCheckout = ref<string | null>(null)
 const error = ref<string | null>(null)
+
+// --- Gestión de planes ---
+// Mientras Lemon Squeezy verifica la tienda y habilita cobros reales, la
+// adquisición de planes se gestiona manualmente por WhatsApp (activación
+// desde la base de datos). Para volver al checkout automático, poner
+// PAGOS_MANUALES = false.
+const PAGOS_MANUALES = true
+const WHATSAPP_URL = 'https://wa.me/573001809871'
 
 await cargar()
 
@@ -37,6 +46,18 @@ const planActual = computed(() => {
 function fecha(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('es-CL', { dateStyle: 'medium' })
+}
+
+// Punto de entrada del botón: WhatsApp (manual) o checkout automático.
+function adquirir(plan: Plan) {
+  if (PAGOS_MANUALES) {
+    const periodo = plan.meses === 1 ? 'mes' : `${plan.meses} meses`
+    const email = user.value?.email ? `\nMi correo de la cuenta es: ${user.value.email}` : ''
+    const msg = `Hola 🧶 Quiero adquirir el Plan ${plan.nombre} de Nuditos ($${plan.precio} USD / ${periodo}).${email}`
+    window.open(`${WHATSAPP_URL}?text=${encodeURIComponent(msg)}`, '_blank')
+    return
+  }
+  suscribir(plan.id)
 }
 
 async function suscribir(planId: string) {
@@ -123,17 +144,23 @@ function esActivo(planId: string): boolean {
             class="mt-4 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-40"
             :class="esActivo(plan.id) ? 'bg-verde-text' : 'bg-rosa'"
             :disabled="esActivo(plan.id) || cargandoCheckout === plan.id"
-            @click="suscribir(plan.id)"
+            @click="adquirir(plan)"
           >
             <template v-if="esActivo(plan.id)">Tu plan actual</template>
             <template v-else-if="cargandoCheckout === plan.id">Abriendo pago…</template>
+            <template v-else-if="PAGOS_MANUALES">{{ periodoVigente ? 'Cambiar de plan' : 'Adquirir plan' }}</template>
             <template v-else>{{ periodoVigente ? 'Cambiar a este' : 'Suscribirme' }}</template>
           </button>
         </div>
       </div>
 
       <p class="mt-4 text-center text-xs text-texto2/70">
-        Pago seguro procesado por Lemon Squeezy. Puedes cancelar cuando quieras.
+        <template v-if="PAGOS_MANUALES">
+          Al adquirir un plan te llevamos a WhatsApp 💬 para coordinar el pago y activarlo.
+        </template>
+        <template v-else>
+          Pago seguro procesado por Lemon Squeezy. Puedes cancelar cuando quieras.
+        </template>
       </p>
     </template>
 
