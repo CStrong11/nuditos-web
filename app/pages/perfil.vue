@@ -37,6 +37,7 @@ async function actualizarPerfil(campos: Record<string, any>) {
 }
 
 // --- Valor hora (para la mano de obra de los proyectos) ---
+const { set: setValorHora } = useValorHora()
 const editandoValorHora = ref(false)
 const valorHora = ref<number | null>(perfil.value?.valor_hora ?? null)
 
@@ -49,6 +50,7 @@ async function guardarValorHora() {
   const v = valorHora.value != null && Number(valorHora.value) > 0 ? Number(valorHora.value) : null
   try {
     await actualizarPerfil({ valor_hora: v })
+    setValorHora(v) // sincroniza el banner de "define tu valor hora"
     editandoValorHora.value = false
     avisar('Valor por hora guardado')
   } catch (e: any) {

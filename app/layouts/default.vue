@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const tabs = [
   { to: '/', label: 'Hilos', icon: '🧶' },
-  { to: '/insumos', label: 'Insumos', icon: '🧷', novedad: true },
+  { to: '/insumos', label: 'Insumos', icon: '🧷' },
   { to: '/proyectos', label: 'Proyectos', icon: '🧺' },
   { to: '/resumen', label: 'Resumen', icon: '📊' },
   { to: '/perfil', label: 'Perfil', icon: '👤' },
@@ -9,11 +9,9 @@ const tabs = [
 
 const route = useRoute()
 const user = useSupabaseUser()
-const { vista, comprobar } = useNovedadInsumos()
 const { cargar: cargarSuscripcion } = useSuscripcion()
 
 onMounted(() => {
-  comprobar()
   cargarSuscripcion()
 })
 
@@ -28,10 +26,10 @@ function activa(to: string): boolean {
     <!-- Aviso de trial / modo solo lectura -->
     <AccesoBanner v-if="user" class="pt-3" />
 
-    <slot />
+    <!-- Aviso para definir el valor por hora -->
+    <ValorHoraBanner v-if="user" />
 
-    <!-- Aviso flotante de novedad (solo con sesión iniciada) -->
-    <NovedadToast v-if="user" />
+    <slot />
 
     <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-blanco/90 backdrop-blur">
       <div class="mx-auto flex max-w-3xl justify-around">
@@ -44,12 +42,6 @@ function activa(to: string): boolean {
         >
           <span class="relative">
             <span class="text-xl" :class="activa(tab.to) ? '' : 'grayscale opacity-60'">{{ tab.icon }}</span>
-            <span
-              v-if="tab.novedad && !vista"
-              class="absolute -right-5 -top-1 rounded-full bg-rosa px-1.5 py-px text-[9px] font-bold uppercase leading-tight text-white shadow"
-            >
-              new
-            </span>
           </span>
           {{ tab.label }}
         </NuxtLink>
