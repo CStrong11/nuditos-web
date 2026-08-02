@@ -37,12 +37,19 @@ async function actualizarPerfil(campos: Record<string, any>) {
 }
 
 // --- Valor hora (para la mano de obra de los proyectos) ---
+const editandoValorHora = ref(false)
 const valorHora = ref<number | null>(perfil.value?.valor_hora ?? null)
+
+function editarValorHora() {
+  valorHora.value = perfil.value?.valor_hora ?? null
+  editandoValorHora.value = true
+}
 
 async function guardarValorHora() {
   const v = valorHora.value != null && Number(valorHora.value) > 0 ? Number(valorHora.value) : null
   try {
     await actualizarPerfil({ valor_hora: v })
+    editandoValorHora.value = false
     avisar('Valor por hora guardado')
   } catch (e: any) {
     avisar(e.message, true)
@@ -277,18 +284,38 @@ async function cerrarSesion() {
       <p class="mb-3 text-xs text-texto2">
         Se usa para calcular la mano de obra de tus proyectos.
       </p>
-      <div class="flex items-center gap-2">
+
+      <!-- Edición -->
+      <div v-if="editandoValorHora" class="flex items-center gap-2">
         <span class="text-texto2">$</span>
         <input
           v-model.number="valorHora"
           type="number" min="0" step="any" placeholder="0"
           class="min-w-0 flex-1 rounded-xl border border-borde bg-blanco px-3 py-2 outline-none focus:border-rosa"
+          @keydown.enter="guardarValorHora"
         >
         <button
           class="shrink-0 rounded-xl bg-rosa px-4 py-2 text-sm font-semibold text-white"
           @click="guardarValorHora"
         >
           Guardar
+        </button>
+      </div>
+
+      <!-- Solo lectura -->
+      <div v-else class="flex items-center justify-between gap-3">
+        <p class="text-lg font-semibold">
+          <template v-if="perfil?.valor_hora">
+            {{ dinero(perfil.valor_hora) }}
+            <span class="text-sm font-normal text-texto2">/ hora</span>
+          </template>
+          <span v-else class="text-base font-normal text-texto2/60">Sin definir</span>
+        </p>
+        <button
+          class="shrink-0 rounded-xl border border-borde bg-blanco px-3 py-1.5 text-sm text-texto2"
+          @click="editarValorHora"
+        >
+          ✏️ Editar
         </button>
       </div>
     </section>
