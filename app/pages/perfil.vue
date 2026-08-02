@@ -30,10 +30,23 @@ function avisar(texto: string, error = false) {
 }
 
 // Todos los updates a perfiles llevan WHERE id = uid (el proyecto lo exige).
-async function actualizarPerfil(campos: Record<string, string>) {
+async function actualizarPerfil(campos: Record<string, any>) {
   const { error } = await supabase.from('perfiles').update(campos).eq('id', userID(user.value))
   if (error) throw error
   await refresh()
+}
+
+// --- Valor hora (para la mano de obra de los proyectos) ---
+const valorHora = ref<number | null>(perfil.value?.valor_hora ?? null)
+
+async function guardarValorHora() {
+  const v = valorHora.value != null && Number(valorHora.value) > 0 ? Number(valorHora.value) : null
+  try {
+    await actualizarPerfil({ valor_hora: v })
+    avisar('Valor por hora guardado')
+  } catch (e: any) {
+    avisar(e.message, true)
+  }
 }
 
 // --- Nombre / username ---
@@ -254,6 +267,28 @@ async function cerrarSesion() {
           @click="guardarTema({ color_tema: a })"
         >
           <span v-if="perfil?.color_tema === a">✓</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Valor hora -->
+    <section class="mt-4 rounded-2xl border border-borde bg-blanco p-4">
+      <h2 class="mb-1 font-bold">Valor de tu hora</h2>
+      <p class="mb-3 text-xs text-texto2">
+        Se usa para calcular la mano de obra de tus proyectos.
+      </p>
+      <div class="flex items-center gap-2">
+        <span class="text-texto2">$</span>
+        <input
+          v-model.number="valorHora"
+          type="number" min="0" step="any" placeholder="0"
+          class="min-w-0 flex-1 rounded-xl border border-borde bg-blanco px-3 py-2 outline-none focus:border-rosa"
+        >
+        <button
+          class="shrink-0 rounded-xl bg-rosa px-4 py-2 text-sm font-semibold text-white"
+          @click="guardarValorHora"
+        >
+          Guardar
         </button>
       </div>
     </section>

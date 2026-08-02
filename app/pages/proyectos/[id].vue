@@ -6,7 +6,7 @@ const proyectoID = route.params.id as string
 const tab = ref<'movimientos' | 'porHilo' | 'insumos'>('movimientos')
 
 const { data, status, refresh } = await useAsyncData(`proyecto-${proyectoID}`, async () => {
-  const [proyectoRes, consumoRes, gastosRes, gastosInsumoRes] = await Promise.all([
+  const [proyectoRes, consumoRes, gastosRes, gastosInsumoRes, tiemposRes, perfilRes] = await Promise.all([
     supabase.from('proyectos').select('*').eq('id', proyectoID).single(),
     supabase.from('consumo_por_proyecto').select('*').eq('proyecto_id', proyectoID).maybeSingle(),
     supabase
@@ -21,6 +21,8 @@ const { data, status, refresh } = await useAsyncData(`proyecto-${proyectoID}`, a
       .eq('proyecto_id', proyectoID)
       .eq('tipo', 'uso')
       .order('created_at', { ascending: false }),
+    supabase.from('tiempos_proyecto').select('minutos').eq('proyecto_id', proyectoID),
+    supabase.from('perfiles').select('valor_hora').maybeSingle(),
   ])
   if (proyectoRes.error) throw proyectoRes.error
   return {
@@ -28,12 +30,29 @@ const { data, status, refresh } = await useAsyncData(`proyecto-${proyectoID}`, a
     consumo: consumoRes.data as any,
     gastos: (gastosRes.data ?? []) as unknown as GastoMovimiento[],
     gastosInsumo: (gastosInsumoRes.data ?? []) as unknown as GastoInsumo[],
+    tiempos: (tiemposRes.data ?? []) as { minutos: number }[],
+    valorHora: Number((perfilRes.data as any)?.valor_hora ?? 0),
   }
 })
 
 const proyecto = computed(() => data.value?.proyecto)
 const gastos = computed(() => data.value?.gastos ?? [])
 const gastosInsumo = computed(() => data.value?.gastosInsumo ?? [])
+
+// --- Tiempo y mano de obra ---
+const minutosTotales = computed(() =>
+  (data.value?.tiempos ?? []).reduce((s, t) => s + Number(t.minutos), 0),
+)
+const valorHora = computed(() => data.value?.valorHora ?? 0)
+const costoManoObra = computed(() => (minutosTotales.value / 60) * valorHora.value)
+
+function formatoTiempo(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = Math.round(min % 60)
+  if (h && m) return `${h}h ${m}min`
+  if (h) return `${h}h`
+  return `${m}min`
+}
 
 const gastoHilos = computed(() =>
   gastos.value.reduce((sum, m) => sum + (costoEstimado(m) ?? 0), 0),
@@ -42,6 +61,10 @@ const gastoInsumos = computed(() =>
   gastosInsumo.value.reduce((sum, m) => sum + (costoEstimadoInsumo(m) ?? 0), 0),
 )
 const gastoTotal = computed(() => gastoHilos.value + gastoInsumos.value)
+
+// Precio sugerido: materiales + mano de obra
+const totalProyecto = computed(() => gastoTotal.value + costoManoObra.value)
+const puedeCalcularManoObra = computed(() => minutosTotales.value > 0 && valorHora.value > 0)
 
 const haySinCosto = computed(() =>
   gastos.value.some(m => costoEstimado(m) == null)
@@ -188,6 +211,30 @@ async function eliminar() {
         </p>
         <p v-if="haySinCosto" class="mt-1 text-xs text-texto2">
           No incluye usos sin costo definido
+        </p>
+      </section>
+
+      <!-- Tiempo y mano de obra -->
+      <section v-if="minutosTotales > 0" class="mt-4 rounded-2xl border border-borde bg-blanco p-5 text-center">
+        <h3 class="font-bold">Tiempo invertido</h3>
+        <p class="mt-1 text-3xl font-bold text-rosa">{{ formatoTiempo(minutosTotales) }}</p>
+        <p v-if="valorHora > 0" class="mt-1 text-sm text-texto2">
+          Mano de obra: <span class="font-semibold text-verde-text">{{ dinero(costoManoObra) }}</span>
+        </p>
+        <NuxtLink v-else to="/perfil" class="mt-1 inline-block text-xs text-rosa underline">
+          Define tu “Valor hora” en el perfil para calcular la mano de obra
+        </NuxtLink>
+      </section>
+
+      <!-- Total del proyecto (materiales + mano de obra) -->
+      <section
+        v-if="puedeCalcularManoObra"
+        class="mt-4 rounded-2xl border-2 border-rosa/40 bg-rosa-pastel/40 p-5 text-center"
+      >
+        <h3 class="font-bold">Total del proyecto</h3>
+        <p class="mt-1 text-3xl font-bold text-rosa">{{ dinero(totalProyecto) }}</p>
+        <p class="mt-1 text-xs text-texto2">
+          Materiales {{ dinero(gastoTotal) }} · Mano de obra {{ dinero(costoManoObra) }}
         </p>
       </section>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 const hiloID = route.params.id as string
 
 const { data, status, refresh } = await useAsyncData(`hilo-${hiloID}`, async () => {
@@ -48,6 +49,16 @@ const nota = ref('')
 const proyectoID = ref('')
 const procesando = ref(false)
 const error = ref<string | null>(null)
+
+// Tiempo dedicado (solo al usar con un proyecto seleccionado)
+const anadirTiempo = ref(false)
+const tiempoUnidad = ref<'min' | 'horas'>('min')
+const tiempoValor = ref<number>(0)
+
+const tiempoMinutos = computed(() => {
+  if (!anadirTiempo.value || !tiempoValor.value || tiempoValor.value <= 0) return 0
+  return tiempoUnidad.value === 'horas' ? tiempoValor.value * 60 : tiempoValor.value
+})
 
 // Modo de unidad al usar: la propia del hilo, la alterna (g↔m) u ovillos
 // completos — mismas reglas de conversión que la app iOS.
@@ -105,6 +116,9 @@ function abrirModal(tipo: 'usar' | 'reponer') {
   proyectoID.value = ''
   error.value = null
   modo.value = 'unidad'
+  anadirTiempo.value = false
+  tiempoUnidad.value = 'min'
+  tiempoValor.value = 0
   modal.value = tipo
 }
 
@@ -128,6 +142,17 @@ async function confirmarModal() {
         p_nota: nota.value || '',
       })
       if (e) throw e
+
+      // Tiempo dedicado al proyecto (opcional)
+      if (proyectoID.value && tiempoMinutos.value > 0) {
+        const { error: te } = await supabase.from('tiempos_proyecto').insert({
+          user_id: userID(user.value),
+          proyecto_id: proyectoID.value,
+          minutos: tiempoMinutos.value,
+          nota: nota.value || null,
+        })
+        if (te) throw te
+      }
     } else {
       // También convertida: se puede reponer en g/m/ovillos indistintamente.
       const { error: e } = await supabase.rpc('reponer_hilo', {
@@ -370,6 +395,36 @@ const tipoLabel: Record<string, string> = {
             <option v-for="p in proyectos" :key="p.id" :value="p.id">{{ p.nombre }}</option>
           </select>
         </label>
+
+        <!-- Tiempo dedicado (solo con proyecto seleccionado) -->
+        <div v-if="modal === 'usar' && proyectoID" class="mb-3 rounded-xl border border-borde bg-blanco p-3">
+          <label class="flex cursor-pointer items-center justify-between text-sm">
+            <span class="font-medium">⏱️ ¿Añadir tiempo dedicado?</span>
+            <input v-model="anadirTiempo" type="checkbox" class="h-4 w-4 accent-rosa">
+          </label>
+          <div v-if="anadirTiempo" class="mt-3 flex gap-2">
+            <div class="flex rounded-xl border border-borde p-1">
+              <button
+                v-for="u in (['min', 'horas'] as const)" :key="u"
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="tiempoUnidad === u ? 'bg-rosa-pastel text-rosa' : 'text-texto2'"
+                @click="tiempoUnidad = u"
+              >
+                {{ u === 'min' ? 'Minutos' : 'Horas' }}
+              </button>
+            </div>
+            <input
+              v-model.number="tiempoValor"
+              type="number" min="0" step="any"
+              :placeholder="tiempoUnidad === 'min' ? 'Ej: 45' : 'Ej: 1.5'"
+              class="min-w-0 flex-1 rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none placeholder:text-texto2/60 focus:border-rosa"
+            >
+          </div>
+          <p v-if="anadirTiempo && tiempoUnidad === 'horas' && tiempoMinutos > 0" class="mt-2 text-center text-xs text-texto2">
+            ≈ {{ tiempoMinutos }} min
+          </p>
+        </div>
 
         <label class="mb-4 block text-sm text-texto2">
           Nota (opcional)
