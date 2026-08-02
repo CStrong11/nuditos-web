@@ -9,7 +9,7 @@ const { data, status, refresh } = await useAsyncData(`hilo-${hiloID}`, async () 
     supabase.from('hilos').select('*').eq('id', hiloID).single(),
     supabase
       .from('movimientos_hilo')
-      .select('*, proyecto:proyecto_id(nombre)')
+      .select('*, proyecto:proyecto_id(nombre), tiempo:tiempos_proyecto(minutos)')
       .eq('hilo_id', hiloID)
       .order('created_at', { ascending: false }),
     // La cantidad_inicial solo la expone la vista resumen_hilos (como en iOS).
@@ -216,23 +216,47 @@ const editNota = ref('')
 const editProcesando = ref(false)
 const editError = ref<string | null>(null)
 
+// Tiempo dedicado dentro de la edición (solo usos con proyecto)
+const editAnadirTiempo = ref(false)
+const editTiempoUnidad = ref<'min' | 'horas'>('min')
+const editTiempoValor = ref<number>(0)
+
+const editTiempoMinutos = computed(() => {
+  if (!editAnadirTiempo.value || !editTiempoValor.value || editTiempoValor.value <= 0) return 0
+  return editTiempoUnidad.value === 'horas' ? editTiempoValor.value * 60 : editTiempoValor.value
+})
+
 function abrirEditarMov(mov: any) {
   movEdit.value = mov
   editCantidad.value = Math.abs(Number(mov.cantidad))
   editProyecto.value = mov.proyecto_id ?? ''
   editNota.value = mov.nota ?? ''
   editError.value = null
+
+  // Tiempo ya registrado para este movimiento (si lo hay)
+  const mins = Number(mov.tiempo?.[0]?.minutos ?? 0)
+  if (mins > 0) {
+    editAnadirTiempo.value = true
+    if (mins % 60 === 0) { editTiempoUnidad.value = 'horas'; editTiempoValor.value = mins / 60 }
+    else { editTiempoUnidad.value = 'min'; editTiempoValor.value = mins }
+  } else {
+    editAnadirTiempo.value = false
+    editTiempoUnidad.value = 'min'
+    editTiempoValor.value = 0
+  }
 }
 
 async function guardarEdicionMov() {
   editError.value = null
   editProcesando.value = true
   try {
+    const esUso = movEdit.value.tipo === 'uso'
     const { error: e } = await supabase.rpc('editar_movimiento_hilo', {
       p_id: movEdit.value.id,
       p_cantidad: String(editCantidad.value),
-      p_proyecto_id: movEdit.value.tipo === 'uso' ? (editProyecto.value || null) : null,
+      p_proyecto_id: esUso ? (editProyecto.value || null) : null,
       p_nota: editNota.value || '',
+      p_minutos: esUso ? editTiempoMinutos.value : null,
     })
     if (e) throw e
     movEdit.value = null
@@ -572,6 +596,36 @@ async function confirmarEliminarMov() {
             <option v-for="p in proyectos" :key="p.id" :value="p.id">{{ p.nombre }}</option>
           </select>
         </label>
+
+        <!-- Tiempo dedicado (solo usos con proyecto) -->
+        <div v-if="movEdit.tipo === 'uso' && editProyecto" class="mb-3 rounded-xl border border-borde bg-blanco p-3">
+          <label class="flex cursor-pointer items-center justify-between text-sm">
+            <span class="font-medium">⏱️ Tiempo dedicado</span>
+            <input v-model="editAnadirTiempo" type="checkbox" class="h-4 w-4 accent-rosa">
+          </label>
+          <div v-if="editAnadirTiempo" class="mt-3 flex gap-2">
+            <div class="flex rounded-xl border border-borde p-1">
+              <button
+                v-for="u in (['min', 'horas'] as const)" :key="u"
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="editTiempoUnidad === u ? 'bg-rosa-pastel text-rosa' : 'text-texto2'"
+                @click="editTiempoUnidad = u"
+              >
+                {{ u === 'min' ? 'Minutos' : 'Horas' }}
+              </button>
+            </div>
+            <input
+              v-model.number="editTiempoValor"
+              type="number" min="0" step="any"
+              :placeholder="editTiempoUnidad === 'min' ? 'Ej: 45' : 'Ej: 1.5'"
+              class="min-w-0 flex-1 rounded-xl border border-borde bg-blanco px-3 py-2.5 outline-none placeholder:text-texto2/60 focus:border-rosa"
+            >
+          </div>
+          <p v-if="editAnadirTiempo && editTiempoUnidad === 'horas' && editTiempoMinutos > 0" class="mt-2 text-center text-xs text-texto2">
+            ≈ {{ editTiempoMinutos }} min
+          </p>
+        </div>
 
         <label class="mb-4 block text-sm text-texto2">
           Nota (opcional)

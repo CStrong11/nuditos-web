@@ -23,11 +23,18 @@ create index if not exists tiempos_proyecto_mov_idx
 
 
 -- ---------- RPC: editar_movimiento_hilo ----------
+-- p_minutos: tiempo dedicado del uso (solo tipo 'uso').
+--   null / <= 0  -> quita el tiempo ligado
+--   > 0          -> lo crea o actualiza (permite añadir tiempo a un uso que
+--                   se registró sin él, p. ej. proyectos ya terminados)
+drop function if exists public.editar_movimiento_hilo(uuid, numeric, uuid, text);
+
 create or replace function public.editar_movimiento_hilo(
   p_id          uuid,
   p_cantidad    numeric,
   p_proyecto_id uuid default null,
-  p_nota        text default null
+  p_nota        text default null,
+  p_minutos     numeric default null
 ) returns void
 language plpgsql
 security definer
@@ -90,20 +97,25 @@ begin
          proyecto_id = case when v_mov.tipo = 'uso' then p_proyecto_id else proyecto_id end
    where id = p_id and user_id = v_uid;
 
-  -- Mover / soltar el tiempo ligado según el nuevo proyecto
+  -- Tiempo dedicado (solo usos): crear / actualizar / quitar
   if v_mov.tipo = 'uso' then
-    if p_proyecto_id is null then
+    if p_proyecto_id is null or p_minutos is null or p_minutos <= 0 then
       delete from tiempos_proyecto where movimiento_id = p_id and user_id = v_uid;
     else
-      update tiempos_proyecto set proyecto_id = p_proyecto_id
+      update tiempos_proyecto
+         set minutos = p_minutos, proyecto_id = p_proyecto_id
        where movimiento_id = p_id and user_id = v_uid;
+      if not found then
+        insert into tiempos_proyecto (user_id, proyecto_id, minutos, movimiento_id)
+        values (v_uid, p_proyecto_id, p_minutos, p_id);
+      end if;
     end if;
   end if;
 end;
 $$;
 
-revoke execute on function public.editar_movimiento_hilo(uuid, numeric, uuid, text) from public, anon;
-grant execute on function public.editar_movimiento_hilo(uuid, numeric, uuid, text) to authenticated;
+revoke execute on function public.editar_movimiento_hilo(uuid, numeric, uuid, text, numeric) from public, anon;
+grant execute on function public.editar_movimiento_hilo(uuid, numeric, uuid, text, numeric) to authenticated;
 
 
 -- ---------- RPC: eliminar_movimiento_hilo ----------
