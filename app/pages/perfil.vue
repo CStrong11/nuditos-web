@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const { iniciarTour } = useTour()
 
 const { data: perfil, refresh } = await useAsyncData('perfil', async () => {
   const { data } = await supabase.from('perfiles').select('*').single()
@@ -364,6 +365,21 @@ async function cerrarSesion() {
       </span>
       <span class="shrink-0 text-texto2">›</span>
     </NuxtLink>
+
+    <!-- Ver tutorial de nuevo -->
+    <button
+      class="mt-3 flex w-full items-center gap-3 rounded-2xl border border-borde bg-blanco p-4 text-left transition hover:border-rosa"
+      @click="navigateTo('/?tour=1')"
+    >
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rosa-pastel text-lg">
+        🧭
+      </span>
+      <span class="min-w-0 flex-1">
+        <span class="block font-semibold">Ver el tutorial</span>
+        <span class="block text-xs text-texto2">Repite el recorrido guiado de la app</span>
+      </span>
+      <span class="shrink-0 text-texto2">›</span>
+    </button>
 
     <!-- Ayuda -->
     <NuxtLink

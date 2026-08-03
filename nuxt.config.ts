@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxtjs/supabase', '@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@vercel/analytics/nuxt'],
-  css: ['~/assets/css/tema.css'],
+  css: ['~/assets/css/tema.css', 'driver.js/dist/driver.css', '~/assets/css/tour.css'],
   // Secretos solo del servidor. Se leen de las variables de entorno de Vercel
   // (sin prefijo NUXT_), capturadas en el build.
   runtimeConfig: {

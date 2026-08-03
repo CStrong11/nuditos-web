@@ -1,10 +1,10 @@
 <script setup lang="ts">
 const tabs = [
-  { to: '/', label: 'Hilos', icon: '🧶' },
-  { to: '/insumos', label: 'Insumos', icon: '🧷' },
-  { to: '/proyectos', label: 'Proyectos', icon: '🧺' },
-  { to: '/resumen', label: 'Resumen', icon: '📊' },
-  { to: '/perfil', label: 'Perfil', icon: '👤' },
+  { to: '/', label: 'Hilos', icon: '🧶', tourId: 'nav-hilos' },
+  { to: '/insumos', label: 'Insumos', icon: '🧷', tourId: 'nav-insumos' },
+  { to: '/proyectos', label: 'Proyectos', icon: '🧺', tourId: 'nav-proyectos' },
+  { to: '/resumen', label: 'Resumen', icon: '📊', tourId: 'nav-resumen' },
+  { to: '/perfil', label: 'Perfil', icon: '👤', tourId: 'nav-perfil' },
 ]
 
 const route = useRoute()
@@ -37,6 +37,7 @@ function activa(to: string): boolean {
           v-for="tab in tabs"
           :key="tab.to"
           :to="tab.to"
+          :data-tour="tab.tourId"
           class="relative flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[11px] font-medium sm:text-xs"
           :class="activa(tab.to) ? 'text-rosa' : 'text-texto2'"
         >

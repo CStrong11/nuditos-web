@@ -15,8 +15,18 @@ interface ResumenHilo {
 
 const supabase = useSupabaseClient()
 const { tieneAcceso } = useSuscripcion()
+const { iniciarTour } = useTour()
 const busqueda = ref('')
 const tagsSeleccionados = ref<Set<string>>(new Set())
+
+// Tour de bienvenida (una vez por cuenta nueva). Un pequeño delay deja que
+// el nav y el botón terminen de montarse antes de resaltarlos.
+// Con ?tour=1 (desde Perfil → "Ver tutorial") se fuerza aunque ya se haya visto.
+const route = useRoute()
+onMounted(() => {
+  const forzar = route.query.tour === '1'
+  setTimeout(() => iniciarTour(forzar), 600)
+})
 
 const { data: hilos, status } = await useAsyncData('resumen_hilos', async () => {
   const { data, error } = await supabase
@@ -98,6 +108,7 @@ function porcentaje(h: ResumenHilo): number {
       </div>
       <NuxtLink
         :to="tieneAcceso ? '/hilos/nuevo' : '/plan'"
+        data-tour="nuevo-hilo"
         class="rounded-xl bg-rosa px-4 py-2 text-sm font-semibold text-white"
       >
         + Nuevo hilo
