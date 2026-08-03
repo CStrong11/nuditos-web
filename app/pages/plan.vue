@@ -79,6 +79,30 @@ async function suscribir(planId: string) {
 function esActivo(planId: string): boolean {
   return !esVitalicia.value && sub.value.plan === planId && periodoVigente.value
 }
+
+// --- Canje de código de embajadora ---
+const codigo = ref('')
+const canjeando = ref(false)
+const canjeMsg = ref<string | null>(null)
+const canjeError = ref<string | null>(null)
+
+async function canjearCodigo() {
+  canjeError.value = null
+  canjeMsg.value = null
+  if (!codigo.value.trim()) return
+  canjeando.value = true
+  try {
+    const { data, error: e } = await supabase.rpc('canjear_codigo', { p_codigo: codigo.value.trim() })
+    if (e) throw e
+    canjeMsg.value = `¡Listo! Se sumó un mes. Tu acceso va hasta el ${fecha(data as unknown as string)}.`
+    codigo.value = ''
+    await cargar()
+  } catch (e: any) {
+    canjeError.value = e?.message ?? 'No se pudo canjear el código'
+  } finally {
+    canjeando.value = false
+  }
+}
 </script>
 
 <template>
@@ -104,6 +128,30 @@ function esActivo(planId: string): boolean {
     </section>
 
     <p v-if="error" class="mt-4 rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>
+
+    <!-- Canjear código de embajadora -->
+    <section v-if="!esVitalicia" class="mt-6 rounded-2xl border border-borde bg-blanco p-4">
+      <h2 class="mb-1 font-bold">¿Tienes un código de embajadora?</h2>
+      <p class="mb-3 text-xs text-texto2">Canjéalo y suma un mes gratis a tu acceso.</p>
+      <div class="flex gap-2">
+        <input
+          v-model="codigo"
+          placeholder="Tu código"
+          autocapitalize="characters"
+          class="min-w-0 flex-1 rounded-xl border border-borde bg-blanco px-3 py-2 uppercase outline-none focus:border-rosa"
+          @keydown.enter="canjearCodigo"
+        >
+        <button
+          :disabled="!codigo.trim() || canjeando"
+          class="shrink-0 rounded-xl bg-rosa px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          @click="canjearCodigo"
+        >
+          {{ canjeando ? 'Canjeando…' : 'Canjear' }}
+        </button>
+      </div>
+      <p v-if="canjeMsg" class="mt-2 rounded-xl bg-verde-bg px-3 py-2 text-sm text-verde-text">{{ canjeMsg }}</p>
+      <p v-if="canjeError" class="mt-2 rounded-xl bg-poco-bg px-3 py-2 text-sm text-poco-text">{{ canjeError }}</p>
+    </section>
 
     <!-- Planes -->
     <template v-if="!esVitalicia">
