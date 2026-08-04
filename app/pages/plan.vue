@@ -53,7 +53,7 @@ function adquirir(plan: Plan) {
   if (PAGOS_MANUALES) {
     const periodo = plan.meses === 1 ? 'mes' : `${plan.meses} meses`
     const email = user.value?.email ? `\nMi correo de la cuenta es: ${user.value.email}` : ''
-    const msg = `Hola 🧶 Quiero adquirir el Plan ${plan.nombre} de Nuditos ($${plan.precio} USD / ${periodo}).${email}`
+    const msg = `Hola 👋 Quiero adquirir el Plan ${plan.nombre} de Nuditos ($${plan.precio} USD / ${periodo}).${email}`
     window.open(`${WHATSAPP_URL}?text=${encodeURIComponent(msg)}`, '_blank')
     return
   }
