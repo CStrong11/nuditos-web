@@ -18,6 +18,19 @@ const WHATSAPP_URL = 'https://wa.me/573001809871'
 
 await cargar()
 
+// Aviso de "gracias" al volver del checkout (redirect: /plan?estado=procesando).
+// El webhook es asíncrono, así que reintentamos unos segundos hasta ver el plan activo.
+const route = useRoute()
+const pagoProcesando = ref(route.query.estado === 'procesando')
+
+onMounted(async () => {
+  if (!pagoProcesando.value) return
+  for (let i = 0; i < 6 && !periodoVigente.value; i++) {
+    await new Promise(r => setTimeout(r, 2500))
+    await cargar()
+  }
+})
+
 // Historial de pagos (resiliente: si la tabla no existe aún, devuelve vacío)
 const { data: pagos } = await useAsyncData('pagos', async () => {
   try {
@@ -114,6 +127,19 @@ async function canjearCodigo() {
         <p class="text-sm text-texto2">Suscripción y pagos</p>
       </div>
     </header>
+
+    <!-- Gracias por el pago (al volver del checkout) -->
+    <div
+      v-if="pagoProcesando"
+      class="mb-4 rounded-2xl border border-verde-text/40 bg-verde-bg p-4 text-center"
+    >
+      <p class="font-bold text-verde-text">¡Gracias por suscribirte! 💛</p>
+      <p class="mt-1 text-sm text-texto2">
+        {{ periodoVigente
+          ? 'Tu plan ya está activo. ¡A tejer! 🧶'
+          : 'Estamos activando tu plan, puede tardar unos segundos…' }}
+      </p>
+    </div>
 
     <!-- Estado actual -->
     <section
