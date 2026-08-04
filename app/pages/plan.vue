@@ -13,7 +13,7 @@ const error = ref<string | null>(null)
 // adquisición de planes se gestiona manualmente por WhatsApp (activación
 // desde la base de datos). Para volver al checkout automático, poner
 // PAGOS_MANUALES = false.
-const PAGOS_MANUALES = true
+const PAGOS_MANUALES = false
 const WHATSAPP_URL = 'https://wa.me/573001809871'
 
 await cargar()
