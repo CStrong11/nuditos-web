@@ -173,8 +173,8 @@ onBeforeUnmount(() => {
           <a href="#precios" style="color:inherit">Precios</a>
         </nav>
         <div style="display:flex;align-items:center;gap:10px">
-          <NuxtLink to="/login" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">Entrar</NuxtLink>
-          <NuxtLink to="/login" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">Probar gratis</NuxtLink>
+          <NuxtLink to="/login" class="nd-alza nd-alza-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">Entrar</NuxtLink>
+          <NuxtLink to="/login" class="nd-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">Probar gratis</NuxtLink>
         </div>
       </div>
     </header>
@@ -490,10 +490,34 @@ onBeforeUnmount(() => {
   font-family: Nunito, ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  cursor: url('/aguja-cursor.svg') 5 3, auto;
 }
-.nd :deep(*) { box-sizing: border-box; }
+/* La aguja de tejer como cursor en toda la landing (también sobre enlaces
+   y botones, que por defecto usarían el puntero). En táctil no aplica. */
+.nd :deep(*) {
+  box-sizing: border-box;
+  cursor: url('/aguja-cursor.svg') 5 3, auto;
+}
 .nd a { color: #C06B86; text-decoration: none; }
 .nd a:hover { color: #A85C32; }
+
+/* Navbar: subrayado animado que crece desde la izquierda al pasar el mouse */
+.nd nav a { position: relative; transition: color .2s ease; }
+.nd nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  height: 2px;
+  width: 100%;
+  border-radius: 2px;
+  background: #C06B86;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+}
+.nd nav a:hover { color: #C06B86; }
+.nd nav a:hover::after { transform: scaleX(1); }
 .nd img { max-width: 100%; }
 
 .nd-carga {

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <!-- sombra sutil para que resalte sobre fondos claros -->
+  <path d="M14 14 L27 27" stroke="rgba(0,0,0,.2)" stroke-width="9" stroke-linecap="round"/>
+  <!-- mango ergonómico (rosa de marca) -->
+  <path d="M14 14 L26.5 26.5" stroke="#C06B86" stroke-width="7.2" stroke-linecap="round"/>
+  <!-- brillo del mango -->
+  <path d="M15.6 13.9 L23 21.3" stroke="rgba(255,255,255,.55)" stroke-width="1.7" stroke-linecap="round"/>
+  <!-- varilla metálica -->
+  <path d="M6.6 6.6 L15 15" stroke="#AEB4BB" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M7 7 L14.4 14.4" stroke="rgba(255,255,255,.6)" stroke-width="0.9" stroke-linecap="round"/>
+  <!-- gancho (hook) en la punta -->
+  <path d="M6.9 6.9 C3.6 5.4 3.6 2.7 5.7 2.4 C7.1 2.2 7.9 3.3 7.4 4.5" fill="none" stroke="#9AA0A6" stroke-width="2.1" stroke-linecap="round"/>
+</svg>
