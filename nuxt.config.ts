@@ -28,7 +28,7 @@ export default defineNuxtConfig({
       login: '/login',
       callback: '/confirm',
       // Públicas: el landing (raíz), legales, ayuda, y las rutas de API.
-      exclude: ['/', '/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**'],
+      exclude: ['/', '/verificado', '/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**'],
     },
   },
   app: {

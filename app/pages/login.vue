@@ -49,7 +49,10 @@ async function enviar() {
       const { data, error: e } = await supabase.auth.signUp({
         email: entrada.value.trim(),
         password: password.value,
-        options: { data: { nombre: nombre.value } },
+        options: {
+          data: { nombre: nombre.value },
+          emailRedirectTo: `${location.origin}/verificado`,
+        },
       })
       if (e) throw e
       if (!data.session) info.value = 'Revisa tu correo para confirmar tu cuenta'
