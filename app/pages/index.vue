@@ -21,6 +21,7 @@ const cargando = ref(true)
 const salirCarga = ref(false)
 const ancho = ref(1200)
 const amplio = computed(() => ancho.value >= 820)
+const menuAbierto = ref(false)
 
 // URL de la app: en producción (nuditoscol.com) los botones apuntan al
 // subdominio app.; en local/preview usan enlaces relativos (mismo origen).
@@ -466,7 +467,7 @@ onBeforeUnmount(() => {
           <a href="#precios" style="color:inherit">{{ t.precios }}</a>
         </nav>
         <div style="display:flex;align-items:center;gap:10px">
-          <!-- Selector de idioma (dropdown) -->
+          <!-- Selector de idioma (siempre visible) -->
           <select
             :value="idioma"
             aria-label="Idioma"
@@ -475,9 +476,30 @@ onBeforeUnmount(() => {
           >
             <option v-for="l in IDIOMAS" :key="l.code" :value="l.code">{{ l.code.toUpperCase() }}</option>
           </select>
-          <NuxtLink :to="appUrl('/login')" class="nd-alza nd-alza-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">{{ t.entrar }}</NuxtLink>
-          <NuxtLink :to="appUrl('/login')" class="nd-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">{{ t.probar }}</NuxtLink>
+
+          <!-- Escritorio: botones -->
+          <NuxtLink v-if="amplio" :to="appUrl('/login')" class="nd-alza nd-alza-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">{{ t.entrar }}</NuxtLink>
+          <NuxtLink v-if="amplio" :to="appUrl('/login')" class="nd-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">{{ t.probar }}</NuxtLink>
+
+          <!-- Móvil: botón menú -->
+          <button
+            v-else type="button" aria-label="Menú"
+            style="display:flex;align-items:center;justify-content:center;width:44px;height:40px;border-radius:12px;border:1.5px solid #ECE3D6;background:#fff;cursor:inherit"
+            @click="menuAbierto = !menuAbierto"
+          >
+            <svg v-if="!menuAbierto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A443D" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A443D" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
         </div>
+      </div>
+
+      <!-- Móvil: panel del menú -->
+      <div v-if="!amplio && menuAbierto" style="border-top:1px solid #ECE3D6;background:#fff;padding:10px 22px 18px">
+        <a href="#funciones" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">{{ t.funciones }}</a>
+        <a href="#instalar" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">{{ t.instalar }}</a>
+        <a href="#precios" style="display:block;padding:12px 4px 16px;font-size:16px;font-weight:700;color:#4A443D;border-bottom:1px solid #ECE3D6;margin-bottom:14px" @click="menuAbierto = false">{{ t.precios }}</a>
+        <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:15px;font-weight:700;color:#4A443D;margin-bottom:10px" @click="menuAbierto = false">{{ t.entrar }}</NuxtLink>
+        <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:13px;border-radius:14px;background:#C06B86;font-size:15px;font-weight:800;color:#fff" @click="menuAbierto = false">{{ t.probar }}</NuxtLink>
       </div>
     </header>
 
@@ -506,7 +528,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div style="flex:0 1 360px;display:flex;justify-content:center;min-width:0" data-reveal data-anim="zoom">
+        <div class="nd-phone-col" style="flex:0 1 360px;display:flex;justify-content:center;min-width:0" data-reveal data-anim="zoom">
           <div style="position:relative">
             <div style="position:absolute;inset:-26px -22px;border-radius:60px;background:radial-gradient(circle at 50% 40%,#F6D7E0 0%,rgba(246,215,224,0) 68%);filter:blur(2px)"></div>
             <div style="position:relative;width:clamp(230px,26vw,282px);border-radius:46px;padding:9px;background:linear-gradient(155deg,#5b544c,#2f2a25);box-shadow:0 34px 60px -22px rgba(74,68,61,.55);animation:nd-float 9s ease-in-out infinite">
@@ -553,7 +575,7 @@ onBeforeUnmount(() => {
               <li style="display:flex;gap:10px"><span style="color:#4E7A4A">✔</span><span>{{ t.f1b3 }}</span></li>
             </ul>
           </div>
-          <div class="nd-feature-phone" style="flex:0 1 340px;display:flex;justify-content:center;min-width:0">
+          <div class="nd-feature-phone nd-phone-col" style="flex:0 1 340px;display:flex;justify-content:center;min-width:0">
             <div style="position:relative">
               <div style="position:absolute;inset:-30px;border-radius:70px;background:radial-gradient(circle at 50% 45%,#DCEDD8 0%,rgba(220,237,216,0) 70%)"></div>
               <div style="position:relative;width:clamp(220px,24vw,266px);border-radius:44px;padding:9px;background:linear-gradient(155deg,#5b544c,#2f2a25);box-shadow:0 28px 50px -20px rgba(74,68,61,.5)">
@@ -891,6 +913,8 @@ onBeforeUnmount(() => {
   .nd-center-mobile p { margin-left: auto; margin-right: auto; }
   .nd-center-mobile > div { justify-content: center; }
   .nd-center-mobile ul { align-items: center; }
+  /* Los teléfonos ocupan el ancho completo y quedan centrados */
+  .nd-phone-col { flex-basis: 100%; }
 }
 
 .nd-alza { transition: transform .25s ease, border-color .25s ease; }
