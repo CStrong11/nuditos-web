@@ -473,7 +473,7 @@ onBeforeUnmount(() => {
             style="padding:8px 28px 8px 12px;border-radius:12px;border:1.5px solid #ECE3D6;background:#fff;font-size:13px;font-weight:700;color:#4A443D;cursor:inherit;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%239A9085%22 stroke-width=%223%22 stroke-linecap=%22round%22><path d=%22M6 9l6 6 6-6%22/></svg>');background-repeat:no-repeat;background-position:right 10px center"
             @change="onIdiomaChange"
           >
-            <option v-for="l in IDIOMAS" :key="l.code" :value="l.code">{{ l.nombre }}</option>
+            <option v-for="l in IDIOMAS" :key="l.code" :value="l.code">{{ l.code.toUpperCase() }}</option>
           </select>
           <NuxtLink :to="appUrl('/login')" class="nd-alza nd-alza-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">{{ t.entrar }}</NuxtLink>
           <NuxtLink :to="appUrl('/login')" class="nd-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">{{ t.probar }}</NuxtLink>
@@ -493,7 +493,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div style="position:relative;max-width:1160px;margin:0 auto;padding:clamp(40px,7vw,86px) 22px clamp(52px,7vw,92px);display:flex;flex-wrap:wrap;align-items:center;gap:clamp(24px,3.6vw,56px)">
-        <div style="flex:1 1 330px;min-width:0" data-stagger="left|left|suave|pop|suave" data-paso="110">
+        <div class="nd-center-mobile" style="flex:1 1 330px;min-width:0" data-stagger="left|left|suave|pop|suave" data-paso="110">
           <span style="display:inline-block;white-space:nowrap;padding:7px 14px;border-radius:999px;background:#DCEDD8;color:#4E7A4A;font-size:13px;font-weight:800;letter-spacing:.02em">{{ t.heroBadge }}</span>
           <h1 style="margin:18px 0 0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:clamp(40px,6.4vw,74px);line-height:1.02;letter-spacing:-.03em;color:#4A443D;text-wrap:balance">{{ t.heroT1 }}<br><span style="color:#C06B86">{{ t.heroT2 }}</span></h1>
           <p style="margin:20px 0 0;font-size:clamp(17px,1.5vw,21px);line-height:1.55;color:#7d7368;max-width:30em;text-wrap:pretty">{{ t.heroP }}</p>
@@ -536,14 +536,14 @@ onBeforeUnmount(() => {
 
     <section id="funciones" style="position:relative;padding:clamp(56px,4.5vw,72px) 22px">
       <div style="max-width:1160px;margin:0 auto">
-        <div style="max-width:600px" data-stagger="down|up|suave" data-paso="105">
+        <div class="nd-center-mobile" style="max-width:600px" data-stagger="down|up|suave" data-paso="105">
           <span style="display:inline-block;padding:6px 13px;border-radius:999px;background:#F6D7E0;color:#C06B86;font-size:13px;font-weight:800">{{ t.fnBadge }}</span>
           <h2 style="margin:16px 0 0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:clamp(32px,4.4vw,52px);line-height:1.06;letter-spacing:-.025em">{{ t.fnT }}</h2>
           <p style="margin:12px 0 0;font-size:17px;line-height:1.55;color:#7d7368;text-wrap:pretty">{{ t.fnP }}</p>
         </div>
 
         <div style="margin-top:clamp(20px,2.2vw,28px);display:flex;flex-wrap:wrap;align-items:flex-start;gap:clamp(26px,4vw,52px)" data-reveal>
-          <div style="flex:1 1 360px;min-width:0" data-stagger="left|left|suave|suave" data-paso="105">
+          <div class="nd-center-mobile" style="flex:1 1 360px;min-width:0" data-stagger="left|left|suave|suave" data-paso="105">
             <span style="font-size:30px">🧶</span>
             <h3 style="margin:6px 0 0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:clamp(26px,3vw,38px);line-height:1.1;letter-spacing:-.02em;color:#C06B86">{{ t.f1T }}</h3>
             <p style="margin:10px 0 0;font-size:17px;line-height:1.55;color:#7d7368;max-width:32em;text-wrap:pretty">{{ t.f1P }}</p>
@@ -883,6 +883,14 @@ onBeforeUnmount(() => {
    con el texto de la izquierda (arriba). En móvil se apila normal. */
 @media (min-width: 900px) {
   .nd-feature-phone { margin-top: -170px; }
+}
+
+/* En móvil, centrar los bloques de texto principales (hero, intro, primera función) */
+@media (max-width: 819px) {
+  .nd-center-mobile { text-align: center; }
+  .nd-center-mobile p { margin-left: auto; margin-right: auto; }
+  .nd-center-mobile > div { justify-content: center; }
+  .nd-center-mobile ul { align-items: center; }
 }
 
 .nd-alza { transition: transform .25s ease, border-color .25s ease; }
