@@ -22,6 +22,12 @@ const salirCarga = ref(false)
 const ancho = ref(1200)
 const amplio = computed(() => ancho.value >= 820)
 
+// URL de la app: en producción (nuditoscol.com) los botones apuntan al
+// subdominio app.; en local/preview usan enlaces relativos (mismo origen).
+const reqUrl = useRequestURL()
+const appBase = computed(() => reqUrl.hostname.endsWith('nuditoscol.com') ? 'https://app.nuditoscol.com' : '')
+const appUrl = (p: string) => appBase.value + p
+
 // --- Idioma del landing: autodetección por región + selector manual ---
 type Idioma = 'es' | 'en' | 'pt' | 'fr'
 const idioma = ref<Idioma>('es')
@@ -469,8 +475,8 @@ onBeforeUnmount(() => {
           >
             <option v-for="l in IDIOMAS" :key="l.code" :value="l.code">{{ l.nombre }}</option>
           </select>
-          <NuxtLink to="/login" class="nd-alza nd-alza-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">{{ t.entrar }}</NuxtLink>
-          <NuxtLink to="/login" class="nd-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">{{ t.probar }}</NuxtLink>
+          <NuxtLink :to="appUrl('/login')" class="nd-alza nd-alza-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">{{ t.entrar }}</NuxtLink>
+          <NuxtLink :to="appUrl('/login')" class="nd-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">{{ t.probar }}</NuxtLink>
         </div>
       </div>
     </header>
@@ -492,8 +498,8 @@ onBeforeUnmount(() => {
           <h1 style="margin:18px 0 0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:clamp(40px,6.4vw,74px);line-height:1.02;letter-spacing:-.03em;color:#4A443D;text-wrap:balance">{{ t.heroT1 }}<br><span style="color:#C06B86">{{ t.heroT2 }}</span></h1>
           <p style="margin:20px 0 0;font-size:clamp(17px,1.5vw,21px);line-height:1.55;color:#7d7368;max-width:30em;text-wrap:pretty">{{ t.heroP }}</p>
           <div style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px">
-            <NuxtLink to="/login" class="nd-alza" style="padding:16px 28px;border-radius:18px;background:#C06B86;color:#fff;font-size:17px;font-weight:800;box-shadow:0 14px 26px -12px rgba(192,107,134,.85)">{{ t.heroCta1 }}</NuxtLink>
-            <NuxtLink to="/login" class="nd-alza nd-alza-borde" style="padding:16px 26px;border-radius:18px;background:#fff;border:1.5px solid #ECE3D6;color:#4A443D;font-size:17px;font-weight:800">{{ t.heroCta2 }}</NuxtLink>
+            <NuxtLink :to="appUrl('/login')" class="nd-alza" style="padding:16px 28px;border-radius:18px;background:#C06B86;color:#fff;font-size:17px;font-weight:800;box-shadow:0 14px 26px -12px rgba(192,107,134,.85)">{{ t.heroCta1 }}</NuxtLink>
+            <NuxtLink :to="appUrl('/login')" class="nd-alza nd-alza-borde" style="padding:16px 26px;border-radius:18px;background:#fff;border:1.5px solid #ECE3D6;color:#4A443D;font-size:17px;font-weight:800">{{ t.heroCta2 }}</NuxtLink>
           </div>
           <div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;font-weight:600;color:#9A9085">
             <span>{{ t.heroCk1 }}</span><span>{{ t.heroCk2 }}</span><span>{{ t.heroCk3 }}</span>
@@ -695,26 +701,26 @@ onBeforeUnmount(() => {
             <p style="margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:20px">{{ t.prMensual }}</p>
             <p style="margin:10px 0 0"><span style="font-family:'Baloo 2',Nunito,sans-serif;font-size:38px;font-weight:800;letter-spacing:-.03em">$5</span><span style="font-size:14px;color:#9A9085"> {{ t.prPerMes }}</span></p>
             <p style="margin:4px 0 0;font-size:13px;color:#9A9085">{{ t.prMensualSub }}</p>
-            <NuxtLink to="/plan" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#F6D7E0;color:#C06B86;font-weight:800;font-size:15px">{{ t.prSuscribir }}</NuxtLink>
+            <NuxtLink :to="appUrl('/plan')" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#F6D7E0;color:#C06B86;font-weight:800;font-size:15px">{{ t.prSuscribir }}</NuxtLink>
           </div>
           <div style="border-radius:26px;background:#fff;color:#4A443D;padding:24px">
             <p style="margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:20px">{{ t.prTrim }}</p>
             <p style="margin:10px 0 0"><span style="font-family:'Baloo 2',Nunito,sans-serif;font-size:38px;font-weight:800;letter-spacing:-.03em">$13</span><span style="font-size:14px;color:#9A9085"> {{ t.prPer3 }}</span></p>
             <p style="margin:4px 0 0;font-size:13px;color:#9A9085">≈ $4,33 {{ t.prAlMes }} · <strong style="color:#4E7A4A">{{ t.prTrimAhorra }}</strong></p>
-            <NuxtLink to="/plan" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#F6D7E0;color:#C06B86;font-weight:800;font-size:15px">{{ t.prSuscribir }}</NuxtLink>
+            <NuxtLink :to="appUrl('/plan')" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#F6D7E0;color:#C06B86;font-weight:800;font-size:15px">{{ t.prSuscribir }}</NuxtLink>
           </div>
           <div style="border-radius:26px;background:#fff;color:#4A443D;padding:24px">
             <p style="margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:20px">{{ t.prSem }}</p>
             <p style="margin:10px 0 0"><span style="font-family:'Baloo 2',Nunito,sans-serif;font-size:38px;font-weight:800;letter-spacing:-.03em">$24</span><span style="font-size:14px;color:#9A9085"> {{ t.prPer6 }}</span></p>
             <p style="margin:4px 0 0;font-size:13px;color:#9A9085">≈ $4,00 {{ t.prAlMes }} · <strong style="color:#4E7A4A">{{ t.prSemAhorra }}</strong></p>
-            <NuxtLink to="/plan" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#F6D7E0;color:#C06B86;font-weight:800;font-size:15px">{{ t.prSuscribir }}</NuxtLink>
+            <NuxtLink :to="appUrl('/plan')" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#F6D7E0;color:#C06B86;font-weight:800;font-size:15px">{{ t.prSuscribir }}</NuxtLink>
           </div>
           <div style="position:relative;border-radius:26px;background:#FDF8F1;color:#4A443D;padding:24px;box-shadow:0 0 0 3px #F6D7E0, 0 22px 40px -20px rgba(0,0,0,.4)">
             <span style="position:absolute;top:-11px;right:18px;padding:4px 10px;border-radius:999px;background:#C06B86;color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em">{{ t.prMejor }}</span>
             <p style="margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:20px">{{ t.prAnual }}</p>
             <p style="margin:10px 0 0"><span style="font-family:'Baloo 2',Nunito,sans-serif;font-size:38px;font-weight:800;letter-spacing:-.03em;color:#C06B86">$40</span><span style="font-size:14px;color:#9A9085"> {{ t.prPerAno }}</span></p>
             <p style="margin:4px 0 0;font-size:13px;color:#9A9085">≈ $3,33 {{ t.prAlMes }} · <strong style="color:#4E7A4A">{{ t.prAnualAhorra }}</strong></p>
-            <NuxtLink to="/plan" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#C06B86;color:#fff;font-weight:800;font-size:15px;box-shadow:0 10px 20px -10px rgba(192,107,134,.9)">{{ t.prSuscribir }}</NuxtLink>
+            <NuxtLink :to="appUrl('/plan')" style="margin-top:18px;display:block;text-align:center;padding:12px;border-radius:14px;background:#C06B86;color:#fff;font-weight:800;font-size:15px;box-shadow:0 10px 20px -10px rgba(192,107,134,.9)">{{ t.prSuscribir }}</NuxtLink>
           </div>
         </div>
 
@@ -739,8 +745,8 @@ onBeforeUnmount(() => {
         <h2 style="margin:18px 0 0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:clamp(34px,5vw,58px);line-height:1.04;letter-spacing:-.03em">{{ t.ctaT }}</h2>
         <p style="margin:14px 0 0;font-size:18px;line-height:1.6;color:#7d7368">{{ t.ctaP }}</p>
         <div style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
-          <NuxtLink to="/login" class="nd-alza" style="padding:16px 30px;border-radius:18px;background:#C06B86;color:#fff;font-size:17px;font-weight:800;box-shadow:0 14px 26px -12px rgba(192,107,134,.85)">{{ t.heroCta1 }}</NuxtLink>
-          <NuxtLink to="/login" class="nd-alza nd-alza-borde" style="padding:16px 28px;border-radius:18px;background:#fff;border:1.5px solid #ECE3D6;color:#4A443D;font-size:17px;font-weight:800">{{ t.ctaBtn2 }}</NuxtLink>
+          <NuxtLink :to="appUrl('/login')" class="nd-alza" style="padding:16px 30px;border-radius:18px;background:#C06B86;color:#fff;font-size:17px;font-weight:800;box-shadow:0 14px 26px -12px rgba(192,107,134,.85)">{{ t.heroCta1 }}</NuxtLink>
+          <NuxtLink :to="appUrl('/login')" class="nd-alza nd-alza-borde" style="padding:16px 28px;border-radius:18px;background:#fff;border:1.5px solid #ECE3D6;color:#4A443D;font-size:17px;font-weight:800">{{ t.ctaBtn2 }}</NuxtLink>
         </div>
       </div>
     </section>
