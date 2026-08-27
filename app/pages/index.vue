@@ -913,8 +913,9 @@ onBeforeUnmount(() => {
   .nd-center-mobile p { margin-left: auto; margin-right: auto; }
   .nd-center-mobile > div { justify-content: center; }
   .nd-center-mobile ul { align-items: center; }
-  /* Los teléfonos ocupan el ancho completo y quedan centrados */
-  .nd-phone-col { flex-basis: 100%; }
+  /* Los teléfonos ocupan el ancho completo y quedan centrados.
+     !important para ganarle al flex-basis del estilo inline. */
+  .nd-phone-col { flex-basis: 100% !important; }
 }
 
 .nd-alza { transition: transform .25s ease, border-color .25s ease; }
