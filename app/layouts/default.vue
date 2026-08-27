@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const tabs = [
-  { to: '/', label: 'Hilos', icon: '🧶', tourId: 'nav-hilos' },
+  { to: '/inicio', label: 'Hilos', icon: '🧶', tourId: 'nav-hilos' },
   { to: '/insumos', label: 'Insumos', icon: '🧷', tourId: 'nav-insumos' },
   { to: '/proyectos', label: 'Proyectos', icon: '🧺', tourId: 'nav-proyectos' },
   { to: '/resumen', label: 'Resumen', icon: '📊', tourId: 'nav-resumen' },
@@ -16,7 +16,7 @@ onMounted(() => {
 })
 
 function activa(to: string): boolean {
-  if (to === '/') return route.path === '/' || route.path.startsWith('/hilos')
+  if (to === '/inicio') return route.path === '/inicio' || route.path.startsWith('/hilos')
   return route.path.startsWith(to)
 }
 </script>

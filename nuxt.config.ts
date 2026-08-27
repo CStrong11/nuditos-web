@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/supabase', '@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@vercel/analytics/nuxt'],
   css: ['~/assets/css/tema.css', 'driver.js/dist/driver.css', '~/assets/css/tour.css'],
+  // La raíz "/" es el landing público; la app vive en "/inicio".
+  // Enlaces viejos a /landing redirigen a la raíz.
+  routeRules: {
+    '/landing': { redirect: '/' },
+  },
   // Secretos solo del servidor. Se leen de las variables de entorno de Vercel
   // (sin prefijo NUXT_), capturadas en el build.
   runtimeConfig: {
@@ -22,8 +27,8 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      // Públicas: legales, ayuda, y las rutas de API (que validan su propia auth).
-      exclude: ['/terminos','/landing', '/privacidad', '/reembolsos', '/ayuda', '/api/**'],
+      // Públicas: el landing (raíz), legales, ayuda, y las rutas de API.
+      exclude: ['/', '/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**'],
     },
   },
   app: {

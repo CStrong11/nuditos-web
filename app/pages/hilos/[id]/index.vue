@@ -196,7 +196,7 @@ async function eliminar() {
   }
   modalEliminar.value = false
   await refreshNuxtData('resumen_hilos')
-  navigateTo('/')
+  navigateTo('/inicio')
 }
 
 const tipoLabel: Record<string, string> = {
@@ -295,7 +295,7 @@ async function confirmarEliminarMov() {
   <main class="mx-auto max-w-2xl px-4 py-8">
     <header class="mb-6 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="text-texto2">←</NuxtLink>
+        <NuxtLink to="/inicio" class="text-texto2">←</NuxtLink>
         <h1 class="text-xl font-bold">Detalle</h1>
       </div>
       <div class="flex gap-2">

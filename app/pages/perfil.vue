@@ -369,7 +369,7 @@ async function cerrarSesion() {
     <!-- Ver tutorial de nuevo -->
     <button
       class="mt-3 flex w-full items-center gap-3 rounded-2xl border border-borde bg-blanco p-4 text-left transition hover:border-rosa"
-      @click="navigateTo('/?tour=1')"
+      @click="navigateTo('/inicio?tour=1')"
     >
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rosa-pastel text-lg">
         🧭
