@@ -37,7 +37,8 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'es' },
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
-        // iOS: abrir en pantalla completa al añadir a inicio
+        // Abrir en pantalla completa al añadir a inicio (estándar + iOS)
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
         { name: 'apple-mobile-web-app-title', content: 'Nuditos' },
@@ -70,13 +71,9 @@ export default defineNuxtConfig({
       ],
     },
     workbox: {
-      // Cachear el shell de la app; los datos siguen viniendo de Supabase en vivo.
-      navigateFallback: '/',
-      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-      navigateFallbackDenylist: [/^\/confirm/],
-    },
-    client: {
-      installPrompt: true,
+      // Cachea los assets del build; en SSR la HTML se pide a la red (sin
+      // navigateFallback, que apuntaba a "/" no precacheada y rompía el SW).
+      globPatterns: ['**/*.{js,css,png,svg,ico}'],
     },
   },
 })
