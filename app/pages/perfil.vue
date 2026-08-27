@@ -59,6 +59,45 @@ async function guardarValorHora() {
   }
 }
 
+// --- Seguridad: cambiar contraseña ---
+const editandoPassword = ref(false)
+const nuevaPassword = ref('')
+const confirmarPassword = ref('')
+const guardandoPassword = ref(false)
+
+async function cambiarPassword() {
+  if (nuevaPassword.value.length < 6) { avisar('La contraseña debe tener al menos 6 caracteres', true); return }
+  if (nuevaPassword.value !== confirmarPassword.value) { avisar('Las contraseñas no coinciden', true); return }
+  guardandoPassword.value = true
+  const { error } = await supabase.auth.updateUser({ password: nuevaPassword.value })
+  guardandoPassword.value = false
+  if (error) { avisar(error.message, true); return }
+  nuevaPassword.value = ''
+  confirmarPassword.value = ''
+  editandoPassword.value = false
+  avisar('Contraseña actualizada ✓')
+}
+
+// --- Seguridad: cambiar correo ---
+const editandoEmail = ref(false)
+const nuevoEmail = ref('')
+const guardandoEmail = ref(false)
+
+async function cambiarEmail() {
+  const email = nuevoEmail.value.trim()
+  if (!/.+@.+\..+/.test(email)) { avisar('Ingresa un correo válido', true); return }
+  guardandoEmail.value = true
+  const { error } = await supabase.auth.updateUser(
+    { email },
+    { emailRedirectTo: `${location.origin}/confirm` },
+  )
+  guardandoEmail.value = false
+  if (error) { avisar(error.message, true); return }
+  nuevoEmail.value = ''
+  editandoEmail.value = false
+  avisar('Te enviamos un correo para confirmar el cambio.')
+}
+
 // --- Nombre / username ---
 const editandoNombre = ref(false)
 const nuevoNombre = ref('')
@@ -249,6 +288,96 @@ async function cerrarSesion() {
           <p class="text-sm font-medium">
             {{ perfil?.created_at ? new Date(perfil.created_at).toLocaleDateString('es-CL', { dateStyle: 'medium' }) : '—' }}
           </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seguridad -->
+    <section class="mt-4 rounded-2xl border border-borde bg-blanco p-4">
+      <h2 class="mb-3 font-bold">Seguridad</h2>
+
+      <!-- Cambiar correo -->
+      <div class="border-b border-borde pb-4">
+        <div v-if="!editandoEmail" class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm font-medium">Correo</p>
+            <p class="truncate text-xs text-texto2">{{ user?.email }}</p>
+          </div>
+          <button
+            class="shrink-0 rounded-xl border border-borde bg-blanco px-3 py-1.5 text-sm text-texto2"
+            @click="nuevoEmail = ''; editandoEmail = true"
+          >
+            ✏️ Cambiar
+          </button>
+        </div>
+        <div v-else>
+          <label class="block text-sm text-texto2">
+            Nuevo correo
+            <input
+              v-model="nuevoEmail"
+              type="email" autocapitalize="none" placeholder="tucorreo@ejemplo.com"
+              class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2 outline-none focus:border-rosa"
+            >
+          </label>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 rounded-xl border border-borde bg-blanco py-2 text-sm" @click="editandoEmail = false">
+              Cancelar
+            </button>
+            <button
+              :disabled="guardandoEmail"
+              class="flex-1 rounded-xl bg-rosa py-2 text-sm font-semibold text-white disabled:opacity-40"
+              @click="cambiarEmail"
+            >
+              {{ guardandoEmail ? 'Enviando…' : 'Guardar' }}
+            </button>
+          </div>
+          <p class="mt-2 text-xs text-texto2/70">Te enviaremos un correo para confirmar el cambio.</p>
+        </div>
+      </div>
+
+      <!-- Cambiar contraseña -->
+      <div class="pt-4">
+        <div v-if="!editandoPassword" class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-medium">Contraseña</p>
+            <p class="text-xs text-texto2">••••••••</p>
+          </div>
+          <button
+            class="shrink-0 rounded-xl border border-borde bg-blanco px-3 py-1.5 text-sm text-texto2"
+            @click="nuevaPassword = ''; confirmarPassword = ''; editandoPassword = true"
+          >
+            ✏️ Cambiar
+          </button>
+        </div>
+        <div v-else>
+          <label class="block text-sm text-texto2">
+            Nueva contraseña
+            <input
+              v-model="nuevaPassword"
+              type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"
+              class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2 outline-none focus:border-rosa"
+            >
+          </label>
+          <label class="mt-2 block text-sm text-texto2">
+            Confirmar contraseña
+            <input
+              v-model="confirmarPassword"
+              type="password" autocomplete="new-password"
+              class="mt-1 w-full rounded-xl border border-borde bg-blanco px-3 py-2 outline-none focus:border-rosa"
+            >
+          </label>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 rounded-xl border border-borde bg-blanco py-2 text-sm" @click="editandoPassword = false">
+              Cancelar
+            </button>
+            <button
+              :disabled="guardandoPassword"
+              class="flex-1 rounded-xl bg-rosa py-2 text-sm font-semibold text-white disabled:opacity-40"
+              @click="cambiarPassword"
+            >
+              {{ guardandoPassword ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
         </div>
       </div>
     </section>
