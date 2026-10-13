@@ -20,6 +20,16 @@ export default defineNuxtConfig({
     lemonsqueezyVariantTrimestral: process.env.LEMONSQUEEZY_VARIANT_TRIMESTRAL || '',
     lemonsqueezyVariantSemestral: process.env.LEMONSQUEEZY_VARIANT_SEMESTRAL || '',
     lemonsqueezyVariantAnual: process.env.LEMONSQUEEZY_VARIANT_ANUAL || '',
+    // Tienda de patrones: un producto genérico con precio personalizado.
+    lemonsqueezyVariantPatron: process.env.LEMONSQUEEZY_VARIANT_PATRON || '',
+    // Resend: envío de correos transaccionales (entrega del PDF).
+    resendApiKey: process.env.RESEND_API_KEY || '',
+    // Protege el cron de entrega de preventas (Fase 3).
+    cronSecret: process.env.CRON_SECRET || '',
+    // Base pública para armar enlaces en los correos.
+    public: {
+      sitioUrl: process.env.NUXT_PUBLIC_SITIO_URL || 'https://www.nuditoscol.com',
+    },
   },
   supabase: {
     // Sin tipos generados por ahora; se pueden generar luego con `supabase gen types`.
@@ -29,7 +39,7 @@ export default defineNuxtConfig({
       callback: '/confirm',
       // Públicas: el landing (raíz), legales, ayuda, API, y las rutas del panel
       // admin (su acceso lo controla el middleware global host-isolation).
-      exclude: ['/', '/verificado', '/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**', '/sin-acceso', '/patron/**'],
+      exclude: ['/', '/verificado', '/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**', '/sin-acceso', '/patron/**', '/tienda-de-patrones', '/tienda-de-patrones/**', '/descargar/**'],
     },
   },
   app: {

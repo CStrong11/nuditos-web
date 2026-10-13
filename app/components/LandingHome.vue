@@ -57,6 +57,10 @@ function detectarIdioma() {
 const T = {
   es: {
     funciones: 'Funciones', instalar: 'Instalar', precios: 'Precios',
+    tienda: 'Tienda',
+    tiendaTit: 'Patrones listos para tejer',
+    tiendaSub: 'Descarga patrones en PDF de crochet y amigurumi, hechos con amor. Págalo una vez y téjelo cuando quieras.',
+    tiendaCta: 'Ver la tienda',
     entrar: 'Entrar', probar: 'Probar gratis',
     cargando: 'tejiendo tu inventario…',
     heroBadge: '🧶 Para tejedoras que venden',
@@ -119,6 +123,10 @@ const T = {
   },
   en: {
     funciones: 'Features', instalar: 'Install', precios: 'Pricing',
+    tienda: 'Shop',
+    tiendaTit: 'Patterns ready to make',
+    tiendaSub: 'Download crochet and amigurumi PDF patterns, made with love. Pay once, make it anytime.',
+    tiendaCta: 'Browse the shop',
     entrar: 'Log in', probar: 'Try it free',
     cargando: 'weaving your inventory…',
     heroBadge: '🧶 For makers who sell',
@@ -181,6 +189,10 @@ const T = {
   },
   pt: {
     funciones: 'Recursos', instalar: 'Instalar', precios: 'Preços',
+    tienda: 'Loja',
+    tiendaTit: 'Padrões prontos para tecer',
+    tiendaSub: 'Baixe padrões em PDF de crochê e amigurumi, feitos com amor. Pague uma vez e faça quando quiser.',
+    tiendaCta: 'Ver a loja',
     entrar: 'Entrar', probar: 'Testar grátis',
     cargando: 'tricotando seu estoque…',
     heroBadge: '🧶 Para artesãs que vendem',
@@ -243,6 +255,10 @@ const T = {
   },
   fr: {
     funciones: 'Fonctionnalités', instalar: 'Installer', precios: 'Tarifs',
+    tienda: 'Boutique',
+    tiendaTit: 'Des patrons prêts à tricoter',
+    tiendaSub: 'Téléchargez des patrons PDF de crochet et amigurumi, faits avec amour. Payez une fois, réalisez-le quand vous voulez.',
+    tiendaCta: 'Voir la boutique',
     entrar: 'Se connecter', probar: 'Essayer gratuitement',
     cargando: 'tricotage de votre inventaire…',
     heroBadge: '🧶 Pour les créatrices qui vendent',
@@ -463,6 +479,7 @@ onBeforeUnmount(() => {
           <a href="#funciones" style="color:inherit">{{ t.funciones }}</a>
           <a href="#instalar" style="color:inherit">{{ t.instalar }}</a>
           <a href="#precios" style="color:inherit">{{ t.precios }}</a>
+          <NuxtLink to="/tienda-de-patrones" style="color:inherit">{{ t.tienda }}</NuxtLink>
         </nav>
         <div style="display:flex;align-items:center;gap:10px">
           <!-- Selector de idioma (siempre visible) -->
@@ -495,7 +512,8 @@ onBeforeUnmount(() => {
       <div v-if="!amplio && menuAbierto" style="border-top:1px solid #ECE3D6;background:#fff;padding:10px 22px 18px">
         <a href="#funciones" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">{{ t.funciones }}</a>
         <a href="#instalar" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">{{ t.instalar }}</a>
-        <a href="#precios" style="display:block;padding:12px 4px 16px;font-size:16px;font-weight:700;color:#4A443D;border-bottom:1px solid #ECE3D6;margin-bottom:14px" @click="menuAbierto = false">{{ t.precios }}</a>
+        <a href="#precios" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">{{ t.precios }}</a>
+        <NuxtLink to="/tienda-de-patrones" style="display:block;padding:12px 4px 16px;font-size:16px;font-weight:700;color:#4A443D;border-bottom:1px solid #ECE3D6;margin-bottom:14px" @click="menuAbierto = false">{{ t.tienda }}</NuxtLink>
         <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:15px;font-weight:700;color:#4A443D;margin-bottom:10px" @click="menuAbierto = false">{{ t.entrar }}</NuxtLink>
         <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:13px;border-radius:14px;background:#C06B86;font-size:15px;font-weight:800;color:#fff" @click="menuAbierto = false">{{ t.probar }}</NuxtLink>
       </div>
@@ -757,6 +775,17 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
+    <!-- Tienda de patrones -->
+    <section id="tienda" style="position:relative;overflow:hidden;background:#F9EFE6;padding:clamp(60px,8vw,104px) 22px;text-align:center">
+      <div style="position:absolute;top:16%;right:14%;font-size:clamp(40px,5vw,72px);line-height:1;color:#F0D3DD;pointer-events:none;animation:nd-float 6s ease-in-out infinite">🧶</div>
+      <div style="position:relative;max-width:680px;margin:0 auto" data-stagger="zoom|up|suave" data-paso="115">
+        <span style="display:inline-block;padding:6px 14px;border-radius:999px;background:#F6D7E0;color:#C06B86;font-size:13px;font-weight:800;letter-spacing:.02em">{{ t.tienda }}</span>
+        <h2 style="margin:16px 0 0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:clamp(30px,4.5vw,50px);line-height:1.06;letter-spacing:-.02em;color:#4A443D">{{ t.tiendaTit }}</h2>
+        <p style="margin:14px 0 0;font-size:18px;line-height:1.6;color:#7d7368">{{ t.tiendaSub }}</p>
+        <NuxtLink to="/tienda-de-patrones" class="nd-alza" style="margin-top:26px;display:inline-block;padding:16px 30px;border-radius:18px;background:#C06B86;color:#fff;font-size:17px;font-weight:800;box-shadow:0 14px 26px -12px rgba(192,107,134,.85)">{{ t.tiendaCta }}</NuxtLink>
+      </div>
+    </section>
+
     <section style="position:relative;overflow:hidden;padding:clamp(64px,8vw,110px) 22px;text-align:center">
       <div style="position:absolute;top:12%;left:12%;width:76px;height:76px;border-radius:999px;background:repeating-conic-gradient(from 20deg,#F6D7E0 0deg 20deg,#FBE6D6 20deg 40deg);pointer-events:none;animation:nd-float2 7s ease-in-out infinite"></div>
       <div style="position:absolute;bottom:18%;right:12%;font-size:clamp(46px,5vw,80px);line-height:1;color:#DCEDD8;pointer-events:none;animation:nd-gira 26s linear infinite">✿</div>
@@ -786,6 +815,7 @@ onBeforeUnmount(() => {
             <a href="#funciones">{{ t.funciones }}</a>
             <a href="#instalar">{{ t.instalar }}</a>
             <a href="#precios">{{ t.precios }}</a>
+            <NuxtLink to="/tienda-de-patrones">{{ t.tienda }}</NuxtLink>
           </div>
           <div style="display:flex;flex-direction:column">
             <span style="font-weight:800;color:#4A443D;margin-bottom:4px">{{ t.ftAyuda }}</span>

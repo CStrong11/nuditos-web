@@ -1,5 +1,7 @@
 import { firmaValida, planDeVariant } from '../../utils/lemonsqueezy'
 import { supabaseAdmin } from '../../utils/admin'
+import { debeEntregarseYa, entregarCompra } from '../../utils/patrones'
+import { correoPreventa, enviarCorreo } from '../../utils/correos'
 
 // Recibe los eventos de Lemon Squeezy, verifica la firma y actualiza
 // `suscripciones` / `pagos` usando la service_role key.
@@ -18,6 +20,64 @@ export default defineEventHandler(async (event) => {
   const attrs = payload?.data?.attributes ?? {}
   const dataId = payload?.data?.id
   const db = supabaseAdmin()
+
+  // =====================================================================
+  // TIENDA DE PATRONES (pago único). Se distingue por custom.tipo='patron'.
+  // =====================================================================
+  if (eventName === 'order_created' && custom?.tipo === 'patron') {
+    const orderId = String(dataId)
+    const patronId = String(custom.patron_id)
+    const email: string = (attrs.user_email || '').toLowerCase()
+
+    // Idempotencia: si ya registramos esta orden, no la dupliques.
+    const { data: existente } = await db
+      .from('compras_patron').select('id').eq('ls_order_id', orderId).maybeSingle()
+    if (existente) return { ok: true, nota: 'orden ya procesada' }
+
+    const { data: patron } = await db
+      .from('patrones').select('titulo, estado, fecha_lanzamiento').eq('id', patronId).maybeSingle()
+    if (!patron) return { ok: true, nota: 'patrón no encontrado' }
+
+    // Vincula a una cuenta si existe una con ese correo (para redescargas).
+    let userId: string | null = null
+    if (email) {
+      const { data } = await db.rpc('user_id_por_email', { p_email: email })
+      if (data) userId = data as string
+    }
+
+    const entregaYa = debeEntregarseYa(patron)
+    const { data: compra, error: insErr } = await db.from('compras_patron').insert({
+      patron_id: patronId,
+      email,
+      user_id: userId,
+      estado: 'pagada',
+      es_preventa: patron.estado === 'preventa' && !entregaYa,
+      ls_order_id: orderId,
+      monto: typeof attrs.total === 'number' ? attrs.total / 100 : null,
+      moneda: attrs.currency ?? 'USD',
+    }).select('id, email, token').single()
+
+    if (insErr || !compra) {
+      console.error('No se pudo registrar la compra del patrón', insErr)
+      return { ok: false }
+    }
+
+    if (entregaYa) {
+      await entregarCompra(db, compra, patron)
+    } else {
+      // Preventa: confirma la compra; el PDF se envía el día del lanzamiento (cron).
+      const { subject, html } = correoPreventa({ titulo: patron.titulo, fecha: patron.fecha_lanzamiento! })
+      await enviarCorreo({ to: compra.email, subject, html })
+    }
+
+    return { ok: true }
+  }
+
+  // Reembolso de una compra de patrón.
+  if (eventName === 'order_refunded' && custom?.tipo === 'patron') {
+    await db.from('compras_patron').update({ estado: 'reembolsada' }).eq('ls_order_id', String(dataId))
+    return { ok: true }
+  }
 
   // Resuelve el user_id en cascada: custom_data -> suscripción guardada -> email.
   async function resolverUsuario(subscriptionId?: string | null, email?: string | null): Promise<string | null> {

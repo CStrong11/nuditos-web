@@ -67,6 +67,58 @@ export async function crearCheckout(opts: {
   return url
 }
 
+/// Crea un checkout de UN PATRÓN (pago único, precio personalizado).
+/// La compradora puede ser invitada (solo correo). El webhook identifica
+/// la compra por `custom.patron_id` y `custom.tipo = 'patron'`.
+export async function crearCheckoutPatron(opts: {
+  patronId: string
+  email?: string
+  precioCentavos: number
+  nombre: string
+  redirectUrl: string
+}): Promise<string> {
+  const c = useRuntimeConfig()
+  const variantId = c.lemonsqueezyVariantPatron as string
+  if (!variantId) throw new Error('Falta LEMONSQUEEZY_VARIANT_PATRON')
+
+  const body = {
+    data: {
+      type: 'checkouts',
+      attributes: {
+        // Precio personalizado por patrón (en centavos).
+        custom_price: opts.precioCentavos,
+        product_options: {
+          name: opts.nombre,
+          redirect_url: opts.redirectUrl,
+          // Un solo patrón por compra.
+          enabled_variants: [Number(variantId)],
+        },
+        checkout_data: {
+          email: opts.email || undefined,
+          custom: { tipo: 'patron', patron_id: opts.patronId },
+        },
+      },
+      relationships: {
+        store: { data: { type: 'stores', id: String(c.lemonsqueezyStoreId) } },
+        variant: { data: { type: 'variants', id: String(variantId) } },
+      },
+    },
+  }
+
+  const res = await $fetch<any>(`${API}/checkouts`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${c.lemonsqueezyApiKey}`,
+      'Content-Type': 'application/vnd.api+json',
+      Accept: 'application/vnd.api+json',
+    },
+    body,
+  })
+  const url = res?.data?.attributes?.url
+  if (!url) throw new Error('Lemon Squeezy no devolvió URL de checkout')
+  return url
+}
+
 /// Verifica la firma X-Signature del webhook (HMAC-SHA256 del cuerpo crudo).
 export function firmaValida(rawBody: string, firma: string | undefined, secret: string): boolean {
   if (!firma || !secret) return false
