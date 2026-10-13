@@ -1,7 +1,6 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'admin' })
-useHead({ title: 'Patrones — Admin Nuditos' })
-
+// Lista de patrones del panel admin. Se renderiza en la raíz del host admin
+// (admin.nuditoscol.com) desde pages/index.vue.
 const supabase = useSupabaseClient()
 
 const { data: patrones } = await useAsyncData('admin-patrones', async () => {
@@ -13,7 +12,6 @@ const { data: patrones } = await useAsyncData('admin-patrones', async () => {
   return data ?? []
 })
 
-// Ventas por patrón (solo compras pagadas/entregadas).
 const { data: compras } = await useAsyncData('admin-ventas', async () => {
   const { data, error } = await supabase
     .from('compras_patron')
@@ -58,7 +56,7 @@ function precioMostrado(p: any): string {
 </script>
 
 <template>
-  <div>
+  <AdminShell>
     <div class="mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-texto">Tienda de patrones</h1>
@@ -67,7 +65,7 @@ function precioMostrado(p: any): string {
         </p>
       </div>
       <NuxtLink
-        to="/admin/patron/nuevo"
+        to="/patron/nuevo"
         class="rounded-2xl bg-rosa px-4 py-2.5 text-sm font-semibold text-white"
       >
         + Nuevo patrón
@@ -76,7 +74,7 @@ function precioMostrado(p: any): string {
 
     <div v-if="!patrones?.length" class="rounded-2xl border border-dashed border-borde bg-blanco p-10 text-center">
       <p class="text-texto2">Aún no hay patrones.</p>
-      <NuxtLink to="/admin/patron/nuevo" class="mt-3 inline-block font-semibold text-rosa">
+      <NuxtLink to="/patron/nuevo" class="mt-3 inline-block font-semibold text-rosa">
         Sube el primero →
       </NuxtLink>
     </div>
@@ -85,7 +83,7 @@ function precioMostrado(p: any): string {
       <NuxtLink
         v-for="p in patrones"
         :key="p.id"
-        :to="`/admin/patron/${p.id}`"
+        :to="`/patron/${p.id}`"
         class="flex gap-3 rounded-2xl border border-borde bg-blanco p-3 transition hover:border-rosa"
       >
         <div class="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-crema">
@@ -110,5 +108,5 @@ function precioMostrado(p: any): string {
         </div>
       </NuxtLink>
     </div>
-  </div>
+  </AdminShell>
 </template>

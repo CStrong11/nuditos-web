@@ -145,7 +145,7 @@ async function guardar() {
     }
 
     await refreshNuxtData('admin-patrones')
-    navigateTo('/admin')
+    navigateTo('/')
   } catch (e: any) {
     error.value = e.message ?? 'No se pudo guardar'
   } finally {
@@ -262,7 +262,7 @@ async function guardar() {
     <p v-if="error" class="rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>
 
     <div class="flex gap-3">
-      <NuxtLink to="/admin" class="flex-1 rounded-2xl border border-borde py-3 text-center font-semibold text-texto2">
+      <NuxtLink to="/" class="flex-1 rounded-2xl border border-borde py-3 text-center font-semibold text-texto2">
         Cancelar
       </NuxtLink>
       <button

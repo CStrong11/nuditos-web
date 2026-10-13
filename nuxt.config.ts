@@ -27,8 +27,9 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      // Públicas: el landing (raíz), legales, ayuda, y las rutas de API.
-      exclude: ['/', '/verificado', '/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**'],
+      // Públicas: el landing (raíz), legales, ayuda, API, y las rutas del panel
+      // admin (su acceso lo controla el middleware global host-isolation).
+      exclude: ['/', '/verificado', '/terminos', '/privacidad', '/reembolsos', '/ayuda', '/api/**', '/sin-acceso', '/patron/**'],
     },
   },
   app: {
