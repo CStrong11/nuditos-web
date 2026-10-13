@@ -20,6 +20,7 @@ const form = reactive({
 })
 
 const conDescuento = ref(props.patron?.precio_descuento != null)
+const esGratis = ref(props.patron ? Number(props.patron.precio) === 0 : false)
 
 const archivoThumb = ref<File | null>(null)
 const previewThumb = ref<string | null>(
@@ -115,10 +116,12 @@ async function guardar() {
 
   // Validaciones
   if (!form.titulo.trim()) { error.value = 'Ponle un título al patrón'; return }
-  if (!form.precio || form.precio <= 0) { error.value = 'El precio debe ser mayor a 0'; return }
-  if (conDescuento.value) {
-    if (!form.precio_descuento || form.precio_descuento <= 0) { error.value = 'El precio con descuento debe ser mayor a 0'; return }
-    if (form.precio_descuento >= form.precio) { error.value = 'El descuento debe ser menor al precio normal'; return }
+  if (!esGratis.value) {
+    if (!form.precio || form.precio <= 0) { error.value = 'El precio debe ser mayor a 0 (o marca "gratis")'; return }
+    if (conDescuento.value) {
+      if (!form.precio_descuento || form.precio_descuento <= 0) { error.value = 'El precio con descuento debe ser mayor a 0'; return }
+      if (form.precio_descuento >= form.precio) { error.value = 'El descuento debe ser menor al precio normal'; return }
+    }
   }
   if (form.estado === 'preventa' && !form.fecha_lanzamiento) {
     error.value = 'La preventa necesita una fecha de lanzamiento'; return
@@ -133,8 +136,8 @@ async function guardar() {
     const payload: Record<string, any> = {
       titulo: form.titulo.trim(),
       descripcion: form.descripcion?.trim() || null,
-      precio: form.precio,
-      precio_descuento: conDescuento.value ? form.precio_descuento : null,
+      precio: esGratis.value ? 0 : form.precio,
+      precio_descuento: (!esGratis.value && conDescuento.value) ? form.precio_descuento : null,
       estado: form.estado,
       fecha_lanzamiento: form.estado === 'preventa' ? form.fecha_lanzamiento : null,
       dificultad: form.dificultad || null,
@@ -222,29 +225,39 @@ async function guardar() {
     <!-- Precio -->
     <div class="rounded-2xl border border-borde bg-blanco p-4">
       <p class="mb-3 font-semibold">Precio <span class="text-xs font-normal text-texto2">(USD)</span></p>
-      <label class="block text-sm text-texto2">
-        Precio normal
-        <div class="mt-1 flex items-center rounded-xl border border-borde bg-blanco px-3 focus-within:border-rosa">
-          <span class="text-texto2">$</span>
-          <input v-model.number="form.precio" type="number" min="0" step="0.01" placeholder="5.00" class="w-full bg-transparent py-2.5 pl-2 text-texto outline-none placeholder:text-texto2/60">
-        </div>
+
+      <label class="mb-3 flex items-center gap-2 text-sm">
+        <input v-model="esGratis" type="checkbox" class="h-4 w-4 accent-rosa">
+        <span class="font-medium">Este patrón es gratis</span>
+        <span class="text-xs text-texto2">(la tejedora solo deja su correo)</span>
       </label>
 
-      <label class="mt-3 flex items-center gap-2 text-sm">
-        <input v-model="conDescuento" type="checkbox" class="h-4 w-4 accent-rosa">
-        <span class="font-medium">Aplicar descuento</span>
-      </label>
-      <label v-if="conDescuento" class="mt-2 block text-sm text-texto2">
-        Precio con descuento
-        <div class="mt-1 flex items-center rounded-xl border border-borde bg-blanco px-3 focus-within:border-rosa">
-          <span class="text-texto2">$</span>
-          <input v-model.number="form.precio_descuento" type="number" min="0" step="0.01" placeholder="3.50" class="w-full bg-transparent py-2.5 pl-2 text-texto outline-none placeholder:text-texto2/60">
-        </div>
-      </label>
-      <p v-if="conDescuento && form.precio && form.precio_descuento" class="mt-2 text-xs text-texto2">
-        Se cobrará <strong class="text-rosa">${{ Number(form.precio_descuento).toFixed(2) }}</strong>
-        (antes <span class="line-through">${{ Number(form.precio).toFixed(2) }}</span>)
-      </p>
+      <template v-if="!esGratis">
+        <label class="block text-sm text-texto2">
+          Precio normal
+          <div class="mt-1 flex items-center rounded-xl border border-borde bg-blanco px-3 focus-within:border-rosa">
+            <span class="text-texto2">$</span>
+            <input v-model.number="form.precio" type="number" min="0" step="0.01" placeholder="5.00" class="w-full bg-transparent py-2.5 pl-2 text-texto outline-none placeholder:text-texto2/60">
+          </div>
+        </label>
+
+        <label class="mt-3 flex items-center gap-2 text-sm">
+          <input v-model="conDescuento" type="checkbox" class="h-4 w-4 accent-rosa">
+          <span class="font-medium">Aplicar descuento</span>
+        </label>
+        <label v-if="conDescuento" class="mt-2 block text-sm text-texto2">
+          Precio con descuento
+          <div class="mt-1 flex items-center rounded-xl border border-borde bg-blanco px-3 focus-within:border-rosa">
+            <span class="text-texto2">$</span>
+            <input v-model.number="form.precio_descuento" type="number" min="0" step="0.01" placeholder="3.50" class="w-full bg-transparent py-2.5 pl-2 text-texto outline-none placeholder:text-texto2/60">
+          </div>
+        </label>
+        <p v-if="conDescuento && form.precio && form.precio_descuento" class="mt-2 text-xs text-texto2">
+          Se cobrará <strong class="text-rosa">${{ Number(form.precio_descuento).toFixed(2) }}</strong>
+          (antes <span class="line-through">${{ Number(form.precio).toFixed(2) }}</span>)
+        </p>
+      </template>
+      <p v-else class="text-sm text-texto2">Se entregará sin costo apenas pongan su correo. 💛</p>
     </div>
 
     <!-- Estado -->

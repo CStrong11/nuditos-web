@@ -139,15 +139,19 @@ const chipOff = 'padding:11px 16px;border-radius:14px;border:1.5px solid #ECE3D6
             <img v-if="thumbUrl(p.thumbnail_path)" :src="thumbUrl(p.thumbnail_path)!" :alt="p.titulo" loading="lazy">
             <div v-else class="t-thumb-ph">🧶</div>
             <span v-if="p.estado === 'preventa'" class="t-badge" style="background:#C06B86">Preventa</span>
+            <span v-else-if="efectivo(p) === 0" class="t-badge" style="background:#4E7A4A">Gratis</span>
             <span v-else-if="p.precio_descuento" class="t-badge" style="background:#4E7A4A">Oferta</span>
           </div>
           <div style="padding:12px 14px 14px">
             <p style="margin:0;font-weight:800;color:#4A443D;font-size:15px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px">{{ p.titulo }}</p>
             <p v-if="p.dificultad" style="margin:4px 0 0;font-size:12px;text-transform:capitalize;color:#A69C90">{{ p.dificultad }}</p>
             <div style="margin-top:8px;display:flex;align-items:baseline;gap:6px">
-              <span style="font-weight:800;color:#C06B86;font-size:18px">${{ efectivo(p).toFixed(2) }}</span>
-              <span v-if="p.precio_descuento" style="font-size:13px;color:#A69C90;text-decoration:line-through">${{ Number(p.precio).toFixed(2) }}</span>
-              <span style="font-size:11px;color:#A69C90">USD</span>
+              <span v-if="efectivo(p) === 0" style="font-weight:800;color:#4E7A4A;font-size:18px">Gratis</span>
+              <template v-else>
+                <span style="font-weight:800;color:#C06B86;font-size:18px">${{ efectivo(p).toFixed(2) }}</span>
+                <span v-if="p.precio_descuento" style="font-size:13px;color:#A69C90;text-decoration:line-through">${{ Number(p.precio).toFixed(2) }}</span>
+                <span style="font-size:11px;color:#A69C90">USD</span>
+              </template>
             </div>
             <span class="t-ver">Ver patrón →</span>
           </div>

@@ -33,6 +33,7 @@ function thumbUrl(path: string | null): string | null {
   return supabase.storage.from('patrones-thumbs').getPublicUrl(path).data.publicUrl
 }
 const efectivo = computed(() => patron.value ? Number(patron.value.precio_descuento ?? patron.value.precio) : 0)
+const esGratis = computed(() => efectivo.value === 0)
 
 // Galería: thumbnail primero + fotos extra. imgActiva es la mostrada en grande.
 const galeria = computed<string[]>(() => {
@@ -58,13 +59,22 @@ async function comprar() {
   errorCompra.value = null
   procesando.value = true
   try {
+    if (esGratis.value) {
+      // Gratis: sin pago. Registramos y enviamos el PDF al correo.
+      await $fetch('/api/tienda/gratis', {
+        method: 'POST',
+        body: { patronId: patron.value.id, email: email.value.trim() },
+      })
+      navigateTo('/tienda-de-patrones/gracias')
+      return
+    }
     const { url } = await $fetch<{ url: string }>('/api/tienda/checkout', {
       method: 'POST',
       body: { patronId: patron.value.id, email: email.value.trim() },
     })
     window.location.href = url
   } catch (e: any) {
-    errorCompra.value = e?.statusMessage || 'No se pudo iniciar el pago. Intenta de nuevo.'
+    errorCompra.value = e?.statusMessage || 'No se pudo completar. Intenta de nuevo.'
     procesando.value = false
   }
 }
@@ -109,9 +119,12 @@ async function comprar() {
             <p v-if="patron.dificultad" style="margin:8px 0 0;font-size:14px;text-transform:capitalize;color:#A69C90">Nivel: {{ patron.dificultad }}</p>
 
             <div style="margin-top:16px;display:flex;align-items:baseline;gap:10px">
-              <span style="font-weight:800;color:#C06B86;font-size:34px">${{ efectivo.toFixed(2) }}</span>
-              <span v-if="patron.precio_descuento" style="font-size:18px;color:#A69C90;text-decoration:line-through">${{ Number(patron.precio).toFixed(2) }}</span>
-              <span style="font-size:14px;color:#A69C90">USD</span>
+              <span v-if="esGratis" style="font-weight:800;color:#4E7A4A;font-size:34px">Gratis</span>
+              <template v-else>
+                <span style="font-weight:800;color:#C06B86;font-size:34px">${{ efectivo.toFixed(2) }}</span>
+                <span v-if="patron.precio_descuento" style="font-size:18px;color:#A69C90;text-decoration:line-through">${{ Number(patron.precio).toFixed(2) }}</span>
+                <span style="font-size:14px;color:#A69C90">USD</span>
+              </template>
             </div>
 
             <p v-if="patron.estado === 'preventa' && patron.fecha_lanzamiento" style="margin:14px 0 0;background:#F6D7E0;color:#C06B86;padding:10px 14px;border-radius:14px;font-size:14px;font-weight:600">
@@ -125,7 +138,7 @@ async function comprar() {
               style="margin-top:26px;width:100%;padding:16px;border:none;border-radius:18px;background:#C06B86;color:#fff;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 14px 26px -12px rgba(192,107,134,.85)"
               @click="modalAbierto = true"
             >
-              {{ patron.estado === 'preventa' ? 'Reservar en preventa' : 'Comprar patrón' }}
+              {{ patron.estado === 'preventa' ? 'Reservar en preventa' : (esGratis ? 'Descargar gratis' : 'Comprar patrón') }}
             </button>
             <p style="margin:12px 0 0;font-size:13px;color:#A69C90">📩 El PDF llega a tu correo. No necesitas crear cuenta. Pago seguro con tarjeta.</p>
           </div>
@@ -158,7 +171,7 @@ async function comprar() {
             :disabled="!emailValido || procesando"
             @click="comprar"
           >
-            {{ procesando ? 'Un momento…' : 'Ir a pagar' }}
+            {{ procesando ? 'Un momento…' : (esGratis ? 'Enviármelo' : 'Ir a pagar') }}
           </button>
         </div>
       </div>
