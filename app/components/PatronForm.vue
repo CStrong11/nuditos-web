@@ -28,6 +28,37 @@ const previewThumb = ref<string | null>(
 const archivoPdf = ref<File | null>(null)
 const pdfActual = ref<string | null>(props.patron?.pdf_path ?? null)
 
+// --- Galería (varias fotos además del thumbnail) ---
+interface ImgExistente { id: string; path: string; url: string }
+const imagenesExistentes = ref<ImgExistente[]>([])
+const imagenesAEliminar = ref<ImgExistente[]>([])
+const imagenesNuevas = ref<{ file: File; preview: string }[]>([])
+
+async function cargarGaleria() {
+  if (!props.patron?.id) return
+  const { data } = await supabase
+    .from('patron_imagenes')
+    .select('id, path')
+    .eq('patron_id', props.patron.id)
+    .order('orden', { ascending: true })
+  imagenesExistentes.value = (data ?? []).map(i => ({ id: i.id, path: i.path, url: thumbUrl(i.path) }))
+}
+if (props.patron?.id) cargarGaleria()
+
+function elegirImagenes(e: Event) {
+  const files = (e.target as HTMLInputElement).files
+  if (!files) return
+  for (const f of Array.from(files)) {
+    imagenesNuevas.value.push({ file: f, preview: URL.createObjectURL(f) })
+  }
+  ;(e.target as HTMLInputElement).value = ''
+}
+function quitarNueva(i: number) { imagenesNuevas.value.splice(i, 1) }
+function marcarEliminar(img: ImgExistente) {
+  imagenesExistentes.value = imagenesExistentes.value.filter(x => x.id !== img.id)
+  imagenesAEliminar.value.push(img)
+}
+
 const guardando = ref(false)
 const error = ref<string | null>(null)
 
@@ -144,6 +175,22 @@ async function guardar() {
       await supabase.from('patrones').update({ pdf_path: path }).eq('id', patronId)
     }
 
+    // Galería: eliminar las marcadas, subir las nuevas.
+    for (const img of imagenesAEliminar.value) {
+      await supabase.from('patron_imagenes').delete().eq('id', img.id)
+      await supabase.storage.from('patrones-thumbs').remove([img.path])
+    }
+    let ordenBase = imagenesExistentes.value.length
+    for (const nueva of imagenesNuevas.value) {
+      const ext = (nueva.file.name.split('.').pop() || 'jpg').toLowerCase()
+      const path = `${patronId}/galeria/${crypto.randomUUID()}.${ext}`
+      const { error: eImg } = await supabase.storage
+        .from('patrones-thumbs')
+        .upload(path, nueva.file, { contentType: nueva.file.type || 'image/jpeg', upsert: true })
+      if (eImg) throw eImg
+      await supabase.from('patron_imagenes').insert({ patron_id: patronId, path, orden: ordenBase++ })
+    }
+
     await refreshNuxtData('admin-patrones')
     navigateTo('/')
   } catch (e: any) {
@@ -257,6 +304,31 @@ async function guardar() {
         </span>
         <input type="file" accept="application/pdf" class="hidden" @change="elegirPdf">
       </label>
+    </div>
+
+    <!-- Galería de fotos -->
+    <div class="rounded-2xl border border-borde bg-blanco p-4">
+      <p class="mb-1 font-semibold">Galería de fotos <span class="text-xs font-normal text-texto2">(opcional)</span></p>
+      <p class="mb-3 text-xs text-texto2">Fotos extra del producto que verá la compradora en la página del patrón.</p>
+
+      <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        <!-- Existentes -->
+        <div v-for="img in imagenesExistentes" :key="img.id" class="group relative aspect-square overflow-hidden rounded-xl border border-borde">
+          <img :src="img.url" class="h-full w-full object-cover" alt="">
+          <button type="button" class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-xs text-white" @click="marcarEliminar(img)">✕</button>
+        </div>
+        <!-- Nuevas (pendientes de guardar) -->
+        <div v-for="(nueva, i) in imagenesNuevas" :key="`n${i}`" class="group relative aspect-square overflow-hidden rounded-xl border border-rosa">
+          <img :src="nueva.preview" class="h-full w-full object-cover" alt="">
+          <button type="button" class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-xs text-white" @click="quitarNueva(i)">✕</button>
+        </div>
+        <!-- Agregar -->
+        <label class="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-borde text-texto2">
+          <span class="text-2xl leading-none">+</span>
+          <span class="mt-1 text-[11px]">Agregar</span>
+          <input type="file" accept="image/*" multiple class="hidden" @change="elegirImagenes">
+        </label>
+      </div>
     </div>
 
     <p v-if="error" class="rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>

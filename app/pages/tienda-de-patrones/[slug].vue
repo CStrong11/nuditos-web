@@ -6,16 +6,25 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const slug = route.params.slug as string
 
-const { data: patron } = await useAsyncData(`patron-${slug}`, async () => {
-  const { data, error } = await supabase
+const { data } = await useAsyncData(`patron-${slug}`, async () => {
+  const { data: p, error } = await supabase
     .from('patrones')
     .select('id, slug, titulo, descripcion, precio, precio_descuento, estado, dificultad, thumbnail_path, fecha_lanzamiento')
     .eq('slug', slug)
     .in('estado', ['publicado', 'preventa'])
     .maybeSingle()
   if (error) throw error
-  return data
+  if (!p) return { patron: null, imagenes: [] as string[] }
+
+  const { data: imgs } = await supabase
+    .from('patron_imagenes')
+    .select('path')
+    .eq('patron_id', p.id)
+    .order('orden', { ascending: true })
+  return { patron: p, imagenes: (imgs ?? []).map(i => i.path) }
 })
+
+const patron = computed(() => data.value?.patron ?? null)
 
 useHead(() => ({ title: patron.value ? `${patron.value.titulo} — Nuditos` : 'Patrón — Nuditos' }))
 
@@ -24,6 +33,16 @@ function thumbUrl(path: string | null): string | null {
   return supabase.storage.from('patrones-thumbs').getPublicUrl(path).data.publicUrl
 }
 const efectivo = computed(() => patron.value ? Number(patron.value.precio_descuento ?? patron.value.precio) : 0)
+
+// Galería: thumbnail primero + fotos extra. imgActiva es la mostrada en grande.
+const galeria = computed<string[]>(() => {
+  const paths: string[] = []
+  if (patron.value?.thumbnail_path) paths.push(patron.value.thumbnail_path)
+  for (const p of data.value?.imagenes ?? []) paths.push(p)
+  return paths
+})
+const imgActiva = ref(0)
+watch(patron, () => { imgActiva.value = 0 })
 
 // --- Compra ---
 const modalAbierto = ref(false)
@@ -63,11 +82,25 @@ async function comprar() {
         <NuxtLink to="/tienda-de-patrones" style="font-size:14px;font-weight:700;color:#7d7368">← Tienda</NuxtLink>
 
         <div style="margin-top:14px;display:grid;gap:clamp(20px,4vw,40px);grid-template-columns:1fr" class="t-detalle">
-          <!-- Imagen -->
-          <div style="position:relative;aspect-ratio:1/1;border:1px solid #ECE3D6;border-radius:24px;overflow:hidden;background:#F9EFE6">
-            <img v-if="thumbUrl(patron.thumbnail_path)" :src="thumbUrl(patron.thumbnail_path)!" :alt="patron.titulo" style="width:100%;height:100%;object-fit:cover">
-            <div v-else style="display:flex;align-items:center;justify-content:center;height:100%;font-size:72px">🧶</div>
-            <span v-if="patron.estado === 'preventa'" style="position:absolute;left:14px;top:14px;padding:5px 14px;border-radius:999px;background:#C06B86;color:#fff;font-size:13px;font-weight:800">Preventa</span>
+          <!-- Galería -->
+          <div>
+            <div style="position:relative;aspect-ratio:1/1;border:1px solid #ECE3D6;border-radius:24px;overflow:hidden;background:#F9EFE6">
+              <img v-if="galeria.length" :src="thumbUrl(galeria[imgActiva])!" :alt="patron.titulo" style="width:100%;height:100%;object-fit:cover">
+              <div v-else style="display:flex;align-items:center;justify-content:center;height:100%;font-size:72px">🧶</div>
+              <span v-if="patron.estado === 'preventa'" style="position:absolute;left:14px;top:14px;padding:5px 14px;border-radius:999px;background:#C06B86;color:#fff;font-size:13px;font-weight:800">Preventa</span>
+            </div>
+            <!-- Miniaturas -->
+            <div v-if="galeria.length > 1" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+              <button
+                v-for="(p, i) in galeria"
+                :key="p"
+                type="button"
+                @click="imgActiva = i"
+                :style="`width:66px;height:66px;border-radius:14px;overflow:hidden;cursor:pointer;padding:0;background:#F9EFE6;border:2px solid ${i === imgActiva ? '#C06B86' : '#ECE3D6'}`"
+              >
+                <img :src="thumbUrl(p)!" alt="" style="width:100%;height:100%;object-fit:cover">
+              </button>
+            </div>
           </div>
 
           <!-- Info -->
