@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   // Compras de preventa pagadas pero aún no entregadas, con su patrón.
   const { data: compras, error } = await db
     .from('compras_patron')
-    .select('id, email, token, patron:patron_id(titulo, fecha_lanzamiento)')
+    .select('id, email, token, patron:patron_id(titulo, fecha_lanzamiento, thumbnail_path)')
     .eq('es_preventa', true)
     .eq('estado', 'pagada')
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })

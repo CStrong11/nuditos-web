@@ -1,6 +1,6 @@
 import { firmaValida, planDeVariant } from '../../utils/lemonsqueezy'
 import { supabaseAdmin } from '../../utils/admin'
-import { debeEntregarseYa, entregarCompra } from '../../utils/patrones'
+import { debeEntregarseYa, entregarCompra, thumbnailUrl } from '../../utils/patrones'
 import { correoPreventa, enviarCorreo } from '../../utils/correos'
 
 // Recibe los eventos de Lemon Squeezy, verifica la firma y actualiza
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     if (existente) return { ok: true, nota: 'orden ya procesada' }
 
     const { data: patron } = await db
-      .from('patrones').select('titulo, estado, fecha_lanzamiento').eq('id', patronId).maybeSingle()
+      .from('patrones').select('titulo, estado, fecha_lanzamiento, thumbnail_path').eq('id', patronId).maybeSingle()
     if (!patron) return { ok: true, nota: 'patrón no encontrado' }
 
     // Vincula a una cuenta si existe una con ese correo (para redescargas).
@@ -66,7 +66,11 @@ export default defineEventHandler(async (event) => {
       await entregarCompra(db, compra, patron)
     } else {
       // Preventa: confirma la compra; el PDF se envía el día del lanzamiento (cron).
-      const { subject, html } = correoPreventa({ titulo: patron.titulo, fecha: patron.fecha_lanzamiento! })
+      const { subject, html } = correoPreventa({
+        titulo: patron.titulo,
+        fecha: patron.fecha_lanzamiento!,
+        thumbnailUrl: thumbnailUrl(db, patron.thumbnail_path),
+      })
       await enviarCorreo({ to: compra.email, subject, html })
     }
 

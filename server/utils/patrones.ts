@@ -9,17 +9,27 @@ export function debeEntregarseYa(patron: { estado: string; fecha_lanzamiento: st
   return patron.fecha_lanzamiento <= new Date().toISOString().slice(0, 10)
 }
 
+/// URL pública del thumbnail de un patrón (bucket público), o null.
+export function thumbnailUrl(db: SupabaseClient, path?: string | null): string | null {
+  if (!path) return null
+  return db.storage.from('patrones-thumbs').getPublicUrl(path).data.publicUrl
+}
+
 /// Marca la compra como entregada y envía el correo con el enlace de descarga.
 export async function entregarCompra(
   db: SupabaseClient,
   compra: { id: string; email: string; token: string },
-  patron: { titulo: string },
+  patron: { titulo: string; thumbnail_path?: string | null },
 ): Promise<void> {
   const c = useRuntimeConfig()
   const base = c.public.sitioUrl as string
   const descargaUrl = `${base}/descargar/${compra.token}`
 
-  const { subject, html } = correoEntrega({ titulo: patron.titulo, descargaUrl })
+  const { subject, html } = correoEntrega({
+    titulo: patron.titulo,
+    descargaUrl,
+    thumbnailUrl: thumbnailUrl(db, patron.thumbnail_path),
+  })
   const ok = await enviarCorreo({ to: compra.email, subject, html })
 
   await db.from('compras_patron').update({
