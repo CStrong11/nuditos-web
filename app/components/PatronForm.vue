@@ -224,9 +224,9 @@ async function guardar() {
       <p class="mb-3 font-semibold">Precio <span class="text-xs font-normal text-texto2">(USD)</span></p>
       <label class="block text-sm text-texto2">
         Precio normal
-        <div class="relative mt-1">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-texto2">$</span>
-          <input v-model.number="form.precio" type="number" min="0" step="0.01" placeholder="5.00" class="campo pl-7">
+        <div class="mt-1 flex items-center rounded-xl border border-borde bg-blanco px-3 focus-within:border-rosa">
+          <span class="text-texto2">$</span>
+          <input v-model.number="form.precio" type="number" min="0" step="0.01" placeholder="5.00" class="w-full bg-transparent py-2.5 pl-2 text-texto outline-none placeholder:text-texto2/60">
         </div>
       </label>
 
@@ -236,9 +236,9 @@ async function guardar() {
       </label>
       <label v-if="conDescuento" class="mt-2 block text-sm text-texto2">
         Precio con descuento
-        <div class="relative mt-1">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-texto2">$</span>
-          <input v-model.number="form.precio_descuento" type="number" min="0" step="0.01" placeholder="3.50" class="campo pl-7">
+        <div class="mt-1 flex items-center rounded-xl border border-borde bg-blanco px-3 focus-within:border-rosa">
+          <span class="text-texto2">$</span>
+          <input v-model.number="form.precio_descuento" type="number" min="0" step="0.01" placeholder="3.50" class="w-full bg-transparent py-2.5 pl-2 text-texto outline-none placeholder:text-texto2/60">
         </div>
       </label>
       <p v-if="conDescuento && form.precio && form.precio_descuento" class="mt-2 text-xs text-texto2">
