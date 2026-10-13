@@ -20,7 +20,8 @@ export default defineNuxtConfig({
     lemonsqueezyVariantTrimestral: process.env.LEMONSQUEEZY_VARIANT_TRIMESTRAL || '',
     lemonsqueezyVariantSemestral: process.env.LEMONSQUEEZY_VARIANT_SEMESTRAL || '',
     lemonsqueezyVariantAnual: process.env.LEMONSQUEEZY_VARIANT_ANUAL || '',
-    // Tienda de patrones: un producto genérico con precio personalizado.
+    // Tienda de patrones: un producto "Single payment" cuyo precio se fija por
+    // checkout con custom_price (el cliente no lo puede cambiar). NO usar PWYW.
     lemonsqueezyVariantPatron: process.env.LEMONSQUEEZY_VARIANT_PATRON || '',
     // Resend: envío de correos transaccionales (entrega del PDF).
     resendApiKey: process.env.RESEND_API_KEY || '',
