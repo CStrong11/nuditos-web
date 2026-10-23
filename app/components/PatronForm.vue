@@ -95,11 +95,19 @@ async function slugUnico(base: string): Promise<string> {
   return `${base}-${Date.now()}`
 }
 
+// Al elegir la portada, abrimos el recortador para encuadrarla en cuadrado.
+const archivoACrop = ref<File | null>(null)
 function elegirThumb(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
+  archivoACrop.value = file
+  ;(e.target as HTMLInputElement).value = '' // permite re-elegir la misma foto
+}
+function onRecortada(file: File) {
   archivoThumb.value = file
+  if (previewThumb.value?.startsWith('blob:')) URL.revokeObjectURL(previewThumb.value)
   previewThumb.value = URL.createObjectURL(file)
+  archivoACrop.value = null
 }
 
 function elegirPdf(e: Event) {
@@ -212,15 +220,24 @@ async function guardar() {
 
 <template>
   <form class="space-y-5" @submit.prevent="guardar">
-    <!-- Thumbnail -->
+    <!-- Thumbnail (portada cuadrada) -->
     <label class="block cursor-pointer">
-      <span class="mb-2 block font-semibold">Thumbnail <span class="text-xs font-normal text-texto2">(portada del patrón)</span></span>
-      <div class="flex aspect-[4/3] max-w-xs items-center justify-center overflow-hidden rounded-2xl border border-borde bg-blanco">
+      <span class="mb-2 block font-semibold">Portada <span class="text-xs font-normal text-texto2">(se encuadra en cuadrado)</span></span>
+      <div class="flex aspect-square max-w-[220px] items-center justify-center overflow-hidden rounded-2xl border border-borde bg-blanco">
         <img v-if="previewThumb" :src="previewThumb" class="h-full w-full object-cover" alt="">
         <span v-else class="text-sm text-texto2">Agregar imagen</span>
       </div>
+      <span class="mt-1 block text-xs text-rosa">{{ previewThumb ? 'Cambiar portada' : '' }}</span>
       <input type="file" accept="image/*" class="hidden" @change="elegirThumb">
     </label>
+
+    <!-- Recortador de portada -->
+    <RecortadorImagen
+      v-if="archivoACrop"
+      :archivo="archivoACrop"
+      @listo="onRecortada"
+      @cerrar="archivoACrop = null"
+    />
 
     <!-- Datos básicos -->
     <div class="space-y-3">
