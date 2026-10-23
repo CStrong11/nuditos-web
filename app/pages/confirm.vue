@@ -6,7 +6,7 @@ definePageMeta({ layout: false })
 const user = useSupabaseUser()
 
 watch(user, (u) => {
-  if (u) navigateTo('/inicio')
+  if (u) navigateTo(destinoTrasLogin())
 }, { immediate: true })
 </script>
 

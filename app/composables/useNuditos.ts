@@ -12,6 +12,14 @@ export function dinero(v: number): string {
   return '$' + new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 }).format(v)
 }
 
+/// A dónde ir tras iniciar sesión, según el dominio. El panel admin se queda
+/// SIEMPRE en su propio dominio (raíz "/"); la app va a "/inicio". Así, quien
+/// entre por admin.nuditoscol.com nunca aterriza en la app.
+export function destinoTrasLogin(): string {
+  if (import.meta.client && window.location.hostname === 'admin.nuditoscol.com') return '/'
+  return '/inicio'
+}
+
 /// Equivalente en ovillos de una cantidad, según la unidad del hilo y sus
 /// datos de ovillo. null si el hilo no tiene el dato necesario.
 export function ovillosDe(

@@ -16,7 +16,7 @@ const info = ref<string | null>(null)
 const mostrarPassword = ref(false)
 
 watch(user, (u) => {
-  if (u) navigateTo('/inicio')
+  if (u) navigateTo(destinoTrasLogin())
 }, { immediate: true })
 
 watch(modo, () => {
