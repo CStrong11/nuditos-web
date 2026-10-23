@@ -62,6 +62,7 @@ function marcarEliminar(img: ImgExistente) {
 
 const guardando = ref(false)
 const error = ref<string | null>(null)
+const exito = ref(false)
 
 const ESTADOS = [
   { id: 'borrador', label: 'Borrador', ayuda: 'Solo tú lo ves' },
@@ -157,15 +158,19 @@ async function guardar() {
       patronId = (data as any).id
     }
 
-    // Subir thumbnail (bucket público)
+    // Subir thumbnail (bucket público). Nombre ÚNICO por subida para que la
+    // URL cambie y no quede la foto vieja en caché del navegador/CDN.
     if (archivoThumb.value) {
+      const anterior = props.patron?.thumbnail_path as string | undefined
       const ext = (archivoThumb.value.name.split('.').pop() || 'jpg').toLowerCase()
-      const path = `${patronId}/thumb.${ext}`
+      const path = `${patronId}/thumb-${Date.now()}.${ext}`
       const { error: e2 } = await supabase.storage
         .from('patrones-thumbs')
         .upload(path, archivoThumb.value, { contentType: archivoThumb.value.type || 'image/jpeg', upsert: true })
       if (e2) throw e2
       await supabase.from('patrones').update({ thumbnail_path: path }).eq('id', patronId)
+      // Borra la portada anterior (best-effort) para no acumular archivos.
+      if (anterior && anterior !== path) await supabase.storage.from('patrones-thumbs').remove([anterior])
     }
 
     // Subir PDF (bucket PRIVADO)
@@ -195,10 +200,11 @@ async function guardar() {
     }
 
     await refreshNuxtData('admin-patrones')
-    navigateTo('/')
+    exito.value = true
+    // Deja ver el mensaje de éxito un momento y vuelve a la lista.
+    setTimeout(() => navigateTo('/'), 900)
   } catch (e: any) {
-    error.value = e.message ?? 'No se pudo guardar'
-  } finally {
+    error.value = e.message ?? 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.'
     guardando.value = false
   }
 }
@@ -344,7 +350,8 @@ async function guardar() {
       </div>
     </div>
 
-    <p v-if="error" class="rounded-xl bg-rosa-pastel px-4 py-2 text-sm text-rosa">{{ error }}</p>
+    <p v-if="error" class="rounded-xl bg-rosa-pastel px-4 py-3 text-sm font-medium text-rosa">⚠️ {{ error }}</p>
+    <p v-if="exito" class="rounded-xl bg-verde-bg px-4 py-3 text-sm font-medium text-verde-text">✅ ¡Guardado! Llevándote a la lista…</p>
 
     <div class="flex gap-3">
       <NuxtLink to="/" class="flex-1 rounded-2xl border border-borde py-3 text-center font-semibold text-texto2">

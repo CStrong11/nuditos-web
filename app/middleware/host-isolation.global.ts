@@ -24,13 +24,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (!user.value) return navigateTo('/login')
     if (to.path === '/sin-acceso') return // la propia página de "sin permiso"
 
+    // Usa la función es_admin() (SECURITY DEFINER): no depende de las políticas
+    // RLS de perfiles, así que es fiable para cualquier admin.
     const supabase = useSupabaseClient()
-    const { data } = await supabase
-      .from('perfiles')
-      .select('es_admin')
-      .eq('id', userID(user.value))
-      .maybeSingle()
-    if (!data?.es_admin) return navigateTo('/sin-acceso')
+    const { data: esAdmin, error } = await supabase.rpc('es_admin')
+    // Si la consulta falla (red/timeout), no la echamos como si no fuera admin:
+    // la mandamos a login para reintentar la sesión.
+    if (error) return navigateTo('/login')
+    if (!esAdmin) return navigateTo('/sin-acceso')
     return
   }
 
