@@ -13,6 +13,7 @@ const reqUrl = useRequestURL()
 const enProd = reqUrl.hostname.endsWith('nuditoscol.com')
 const appUrl = (p: string) => (enProd ? 'https://app.nuditoscol.com' : '') + p
 
+const { idioma, cambiar, t } = useTiendaI18n()
 const menuAbierto = ref(false)
 const ancho = ref(1200)
 const amplio = computed(() => ancho.value >= 820)
@@ -31,14 +32,22 @@ onBeforeUnmount(() => window.removeEventListener('resize', medir))
         </a>
 
         <nav v-if="amplio" style="display:flex;align-items:center;gap:26px;font-size:15px;font-weight:700;color:#4A443D">
-          <a href="/#funciones" style="color:inherit">Funciones</a>
-          <a href="/#precios" style="color:inherit">Precios</a>
-          <NuxtLink to="/tienda-de-patrones" style="color:#C06B86">Tienda</NuxtLink>
+          <a href="/#funciones" style="color:inherit">{{ t.navFunciones }}</a>
+          <a href="/#precios" style="color:inherit">{{ t.navPrecios }}</a>
+          <NuxtLink to="/tienda-de-patrones" style="color:#C06B86">{{ t.navTienda }}</NuxtLink>
         </nav>
 
         <div style="display:flex;align-items:center;gap:10px">
-          <NuxtLink v-if="amplio" :to="appUrl('/login')" class="t-alza t-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">Entrar</NuxtLink>
-          <NuxtLink v-if="amplio" :to="appUrl('/login')" class="t-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">Probar gratis</NuxtLink>
+          <select
+            :value="idioma"
+            aria-label="Idioma"
+            style="padding:8px 8px;border-radius:12px;border:1.5px solid #ECE3D6;background:#fff;font-size:13px;font-weight:700;color:#4A443D;cursor:pointer"
+            @change="cambiar(($event.target as HTMLSelectElement).value as any)"
+          >
+            <option v-for="i in ['es','en','pt','fr']" :key="i" :value="i">{{ i.toUpperCase() }}</option>
+          </select>
+          <NuxtLink v-if="amplio" :to="appUrl('/login')" class="t-alza t-borde" style="padding:9px 16px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:14px;font-weight:700;color:#4A443D">{{ t.entrar }}</NuxtLink>
+          <NuxtLink v-if="amplio" :to="appUrl('/login')" class="t-alza" style="padding:10px 18px;border-radius:14px;background:#C06B86;font-size:14px;font-weight:800;color:#fff;box-shadow:0 6px 16px -6px rgba(192,107,134,.7)">{{ t.probar }}</NuxtLink>
           <button v-if="!amplio" aria-label="Menú" style="display:flex;padding:8px;border-radius:12px;border:1.5px solid #ECE3D6;background:#fff" @click="menuAbierto = !menuAbierto">
             <svg v-if="!menuAbierto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A443D" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
             <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A443D" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -47,11 +56,11 @@ onBeforeUnmount(() => window.removeEventListener('resize', medir))
       </div>
 
       <div v-if="!amplio && menuAbierto" style="border-top:1px solid #ECE3D6;background:#fff;padding:10px 22px 18px">
-        <a href="/#funciones" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">Funciones</a>
-        <a href="/#precios" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">Precios</a>
-        <NuxtLink to="/tienda-de-patrones" style="display:block;padding:12px 4px 16px;font-size:16px;font-weight:700;color:#C06B86;border-bottom:1px solid #ECE3D6;margin-bottom:14px" @click="menuAbierto = false">Tienda</NuxtLink>
-        <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:15px;font-weight:700;color:#4A443D;margin-bottom:10px" @click="menuAbierto = false">Entrar</NuxtLink>
-        <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:13px;border-radius:14px;background:#C06B86;font-size:15px;font-weight:800;color:#fff" @click="menuAbierto = false">Probar gratis</NuxtLink>
+        <a href="/#funciones" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">{{ t.navFunciones }}</a>
+        <a href="/#precios" style="display:block;padding:12px 4px;font-size:16px;font-weight:700;color:#4A443D" @click="menuAbierto = false">{{ t.navPrecios }}</a>
+        <NuxtLink to="/tienda-de-patrones" style="display:block;padding:12px 4px 16px;font-size:16px;font-weight:700;color:#C06B86;border-bottom:1px solid #ECE3D6;margin-bottom:14px" @click="menuAbierto = false">{{ t.navTienda }}</NuxtLink>
+        <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1.5px solid #ECE3D6;background:#fff;font-size:15px;font-weight:700;color:#4A443D;margin-bottom:10px" @click="menuAbierto = false">{{ t.entrar }}</NuxtLink>
+        <NuxtLink :to="appUrl('/login')" style="display:block;text-align:center;padding:13px;border-radius:14px;background:#C06B86;font-size:15px;font-weight:800;color:#fff" @click="menuAbierto = false">{{ t.probar }}</NuxtLink>
       </div>
     </header>
 

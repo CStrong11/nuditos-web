@@ -5,6 +5,7 @@ const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const slug = route.params.slug as string
+const { t } = useTiendaI18n()
 
 const { data } = await useAsyncData(`patron-${slug}`, async () => {
   const { data: p, error } = await supabase
@@ -74,7 +75,7 @@ async function comprar() {
     })
     window.location.href = url
   } catch (e: any) {
-    errorCompra.value = e?.statusMessage || 'No se pudo completar. Intenta de nuevo.'
+    errorCompra.value = e?.statusMessage || t.value.errCompra
     procesando.value = false
   }
 }
@@ -84,12 +85,12 @@ async function comprar() {
   <TiendaShell>
     <div style="max-width:1000px;margin:0 auto;padding:clamp(24px,4vw,44px) 22px 60px">
       <div v-if="!patron" style="background:#fff;border:1px solid #ECE3D6;border-radius:20px;padding:56px 22px;text-align:center;color:#9A9085">
-        No encontramos este patrón.
-        <NuxtLink to="/tienda-de-patrones" style="display:block;margin-top:12px;font-weight:800;color:#C06B86">← Ver la tienda</NuxtLink>
+        {{ t.noEncontrado }}
+        <NuxtLink to="/tienda-de-patrones" style="display:block;margin-top:12px;font-weight:800;color:#C06B86">← {{ t.volver }}</NuxtLink>
       </div>
 
       <template v-else>
-        <NuxtLink to="/tienda-de-patrones" style="font-size:14px;font-weight:700;color:#7d7368">← Tienda</NuxtLink>
+        <NuxtLink to="/tienda-de-patrones" style="font-size:14px;font-weight:700;color:#7d7368">← {{ t.volver }}</NuxtLink>
 
         <div style="margin-top:14px;display:grid;gap:clamp(20px,4vw,40px);grid-template-columns:1fr" class="t-detalle">
           <!-- Galería -->
@@ -97,7 +98,7 @@ async function comprar() {
             <div style="position:relative;aspect-ratio:1/1;border:1px solid #ECE3D6;border-radius:24px;overflow:hidden;background:#F9EFE6">
               <img v-if="galeria.length" :src="thumbUrl(galeria[imgActiva])!" :alt="patron.titulo" style="width:100%;height:100%;object-fit:cover">
               <div v-else style="display:flex;align-items:center;justify-content:center;height:100%;font-size:72px">🧶</div>
-              <span v-if="patron.estado === 'preventa'" style="position:absolute;left:14px;top:14px;padding:5px 14px;border-radius:999px;background:#C06B86;color:#fff;font-size:13px;font-weight:800">Preventa</span>
+              <span v-if="patron.estado === 'preventa'" style="position:absolute;left:14px;top:14px;padding:5px 14px;border-radius:999px;background:#C06B86;color:#fff;font-size:13px;font-weight:800">{{ t.bPreventa }}</span>
             </div>
             <!-- Miniaturas -->
             <div v-if="galeria.length > 1" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
@@ -116,10 +117,10 @@ async function comprar() {
           <!-- Info -->
           <div>
             <h1 style="margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:clamp(28px,4vw,42px);line-height:1.08;letter-spacing:-.02em;color:#4A443D">{{ patron.titulo }}</h1>
-            <p v-if="patron.dificultad" style="margin:8px 0 0;font-size:14px;text-transform:capitalize;color:#A69C90">Nivel: {{ patron.dificultad }}</p>
+            <p v-if="patron.dificultad" style="margin:8px 0 0;font-size:14px;text-transform:capitalize;color:#A69C90">{{ t.nivel }} {{ patron.dificultad }}</p>
 
             <div style="margin-top:16px;display:flex;align-items:baseline;gap:10px">
-              <span v-if="esGratis" style="font-weight:800;color:#4E7A4A;font-size:34px">Gratis</span>
+              <span v-if="esGratis" style="font-weight:800;color:#4E7A4A;font-size:34px">{{ t.gratis }}</span>
               <template v-else>
                 <span style="font-weight:800;color:#C06B86;font-size:34px">${{ efectivo.toFixed(2) }}</span>
                 <span v-if="patron.precio_descuento" style="font-size:18px;color:#A69C90;text-decoration:line-through">${{ Number(patron.precio).toFixed(2) }}</span>
@@ -128,7 +129,7 @@ async function comprar() {
             </div>
 
             <p v-if="patron.estado === 'preventa' && patron.fecha_lanzamiento" style="margin:14px 0 0;background:#F6D7E0;color:#C06B86;padding:10px 14px;border-radius:14px;font-size:14px;font-weight:600">
-              🗓️ Preventa — recibirás tu PDF por correo el <strong>{{ patron.fecha_lanzamiento }}</strong>.
+              {{ t.preventaPre }}<strong>{{ patron.fecha_lanzamiento }}</strong>{{ t.preventaPost }}
             </p>
 
             <p v-if="patron.descripcion" style="margin:18px 0 0;white-space:pre-line;font-size:15px;line-height:1.7;color:#6b6258">{{ patron.descripcion }}</p>
@@ -138,9 +139,9 @@ async function comprar() {
               style="margin-top:26px;width:100%;padding:16px;border:none;border-radius:18px;background:#C06B86;color:#fff;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 14px 26px -12px rgba(192,107,134,.85)"
               @click="modalAbierto = true"
             >
-              {{ patron.estado === 'preventa' ? 'Reservar en preventa' : (esGratis ? 'Descargar gratis' : 'Comprar patrón') }}
+              {{ patron.estado === 'preventa' ? t.btnReservar : (esGratis ? t.btnGratis : t.btnComprar) }}
             </button>
-            <p style="margin:12px 0 0;font-size:13px;color:#A69C90">📩 El PDF llega a tu correo. No necesitas crear cuenta. Pago seguro con tarjeta.</p>
+            <p style="margin:12px 0 0;font-size:13px;color:#A69C90">{{ t.nota }}</p>
           </div>
         </div>
       </template>
@@ -149,8 +150,8 @@ async function comprar() {
     <!-- Modal de compra -->
     <div v-if="modalAbierto" style="position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(40,34,30,.45);padding:16px" @click.self="modalAbierto = false">
       <div style="width:100%;max-width:400px;background:#fff;border-radius:24px;padding:24px">
-        <h2 style="margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:20px;color:#4A443D">¿A qué correo enviamos tu patrón?</h2>
-        <p style="margin:6px 0 0;font-size:14px;color:#7d7368">Ahí recibirás el enlace de descarga del PDF.</p>
+        <h2 style="margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-weight:800;font-size:20px;color:#4A443D">{{ t.modalTit }}</h2>
+        <p style="margin:6px 0 0;font-size:14px;color:#7d7368">{{ t.modalSub }}</p>
         <input
           v-model="email"
           type="email"
@@ -163,7 +164,7 @@ async function comprar() {
         <p v-if="errorCompra" style="margin:8px 0 0;font-size:14px;color:#C0392B">{{ errorCompra }}</p>
         <div style="margin-top:16px;display:flex;gap:10px">
           <button style="flex:1;padding:13px;border:1.5px solid #ECE3D6;border-radius:14px;background:#fff;font-size:15px;font-weight:700;color:#7d7368;cursor:pointer" @click="modalAbierto = false">
-            Cancelar
+            {{ t.cancelar }}
           </button>
           <button
             style="flex:1;padding:13px;border:none;border-radius:14px;background:#C06B86;font-size:15px;font-weight:800;color:#fff;cursor:pointer"
@@ -171,7 +172,7 @@ async function comprar() {
             :disabled="!emailValido || procesando"
             @click="comprar"
           >
-            {{ procesando ? 'Un momento…' : (esGratis ? 'Enviármelo' : 'Ir a pagar') }}
+            {{ procesando ? t.momento : (esGratis ? t.enviarmelo : t.irPagar) }}
           </button>
         </div>
       </div>
